@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<!--
+  이 템플릿을 채우는 스킬(Phase 4 `/pipeline-ideate`)을 위한 규칙
+
+  - 섹션 고정: 아래 각 <section>의 존재와 순서를 그대로 유지한다. 내용이 없는 섹션은 삭제하지 말고
+    본문에 "해당 없음"이라고 적는다.
+  - 파일 경로: `ideas/<NN>-<slug>.html` (NN은 2자리 zero-padded 순번, slug는 kebab-case)로 저장하고,
+    이 경로가 짝을 이루는 IDEAS.template.md 표의 "HTML 카드" 열과 문자 그대로 일치해야 한다.
+  - pipeline.json 등록: 이 파일 자체는 개별 artifacts 키를 갖지 않는다. 완료 시 스킬은 IDEAS.md 경로를
+    `artifacts.ideas` 키로만 등록하고, 이 카드는 IDEAS.md 표를 통해 참조된다.
+  - 뷰어 환경: 폰 세로 iframe(약 360~430px 너비, 기기 프레임 미리보기)에서 열람된다. 고정 px보다
+    %·rem·clamp() 단위를 우선 사용하고, 가로 스크롤이 생기지 않게 한다(넓은 표/코드는 이 카드에 없음).
+  - 다크 배경 대응: 뷰어는 root에 data-theme을 주입하지 않으므로 `prefers-color-scheme` media query
+    하나로 라이트/다크 모두 읽히게 유지한다(아래 :root 변수 블록을 삭제하지 않는다).
+  - "카피 리스크 · 차별화" 섹션은 필수이며 절대 비워두지 않는다: §12.3 원칙 —
+    "기능·컨셉 참고는 가능 / 이름·아이콘·그래픽·문구·고유 브랜드 요소 모방은 금지" — 이 카드가 이 원칙을
+    구체적으로 어떻게 지켰는지(무엇을 참고했고 무엇을 독자적으로 새로 만들었는지) 서술한다.
+  - 근거 링크는 실제 URL과 확인 날짜를 함께 표기한다. 날짜 없는 링크만 있는 근거는 불충분으로 간주한다.
+  - [이걸로 진행] 안내 블록의 slug 문구는 IDEAS.md의 slug 값과 대소문자·하이픈까지 정확히 일치해야 한다.
+-->
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{title}} — 아이디어 제안서</title>
+<style>
+  :root { --bg:#fff; --fg:#1a1a2e; --muted:#5c6370; --card:#f5f6fa; --accent:#4f46e5; --line:#e2e5ee; --cta-bg:#eef2ff; --cta-fg:#3730a3; --risk-bg:#fff7ed; --risk-line:#fdba74; --risk-fg:#7c2d12; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#12131a; --fg:#e8eaf2; --muted:#9aa0b0; --card:#1c1e28; --accent:#818cf8; --line:#2a2d3a; --cta-bg:#1e1b3a; --cta-fg:#c7d2fe; --risk-bg:#2a1e14; --risk-line:#9a5a2a; --risk-fg:#fdd8b5; }
+  }
+  * { box-sizing:border-box; }
+  html { -webkit-text-size-adjust:100%; }
+  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Apple SD Gothic Neo","Noto Sans KR",sans-serif; background:var(--bg); color:var(--fg); line-height:1.6; overflow-x:hidden; }
+  .wrap { max-width:640px; margin:0 auto; padding:clamp(20px,6vw,40px) clamp(16px,5vw,24px) 72px; }
+  .badges { display:flex; gap:8px; flex-wrap:wrap; margin:12px 0 4px; }
+  .badge { font-size:13px; font-weight:600; padding:4px 12px; border-radius:999px; background:var(--accent); color:#fff; }
+  .badge.alt { background:transparent; color:var(--accent); border:1px solid var(--accent); }
+  h1 { font-size:clamp(22px,6vw,30px); line-height:1.25; margin:8px 0 4px; text-wrap:balance; }
+  .oneliner { font-size:clamp(15px,4vw,18px); color:var(--muted); margin:0 0 8px; }
+  .bench { font-size:14px; color:var(--muted); margin-bottom:8px; }
+  .meta-line { font-size:12.5px; color:var(--muted); margin-bottom:24px; }
+  section { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px 18px; margin:16px 0; }
+  section h2 { font-size:15px; margin:0 0 10px; color:var(--accent); letter-spacing:.02em; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:560px){ .grid{ grid-template-columns:1fr; } }
+  ul { margin:6px 0 0; padding-left:18px; word-break:keep-all; }
+  li { margin-bottom:4px; }
+  .gap { font-weight:700; }
+  .gap.none{ color:#16a34a; } .gap.weak{ color:#d97706; } .gap.strong{ color:#dc2626; }
+  a { color:var(--accent); word-break:break-all; }
+
+  /* 선택 안내(CTA) */
+  .cta { background:var(--cta-bg); border:1px solid var(--accent); border-radius:14px; padding:18px; margin:20px 0; text-align:center; }
+  .cta p { margin:0 0 8px; font-size:14px; color:var(--cta-fg); }
+  .cta code { display:inline-block; font-size:15px; font-weight:700; padding:6px 14px; border-radius:8px; background:var(--card); color:var(--accent); border:1px solid var(--accent); }
+
+  /* 카피 리스크 · 차별화 섹션 강조 */
+  section.risk { background:var(--risk-bg); border-color:var(--risk-line); }
+  section.risk h2 { color:var(--risk-fg); }
+  section.risk .principle { font-weight:700; margin:0 0 8px; }
+  section.risk .verdict-badge { display:inline-block; font-size:12px; font-weight:700; padding:3px 10px; border-radius:999px; background:var(--risk-line); color:#fff; margin-left:6px; }
+
+  /* 근거 링크 목록 */
+  .evidence-item { font-size:14px; margin-bottom:6px; }
+  .evidence-date { color:var(--muted); font-size:12.5px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="badges">
+    <span class="badge">{{origin_market}} → {{target_market}}</span>
+    <span class="badge alt">{{category}}</span>
+  </div>
+  <h1>{{title}}</h1>
+  <p class="oneliner">{{one_liner}}</p>
+  <p class="bench">벤치마크 원본 앱: <strong>{{benchmark_app}}</strong></p>
+  <p class="meta-line">slug: <code>{{slug}}</code> · opportunity_score {{opportunity_score}} · 개발 난이도(scope): {{scope}}</p>
+
+  <!-- [이걸로 진행] 선택 안내 블록: §12.5 카드 선택 UI 요구 충족 -->
+  <div class="cta">
+    <p>이 아이디어로 진행하려면 채팅에 아래 문구를 그대로 보내세요.</p>
+    <code>{{slug}} 선택</code>
+  </div>
+
+  <section>
+    <h2>타겟 유저</h2>
+    <p>{{target_persona}}</p>
+  </section>
+
+  <div class="grid">
+    <section>
+      <h2>시장 크기</h2>
+      <p>{{market_size}}</p>
+    </section>
+    <section>
+      <h2>타겟 시장 공백</h2>
+      <p><span class="gap {{gap_class}}">{{target_gap}}</span> — {{gap_detail}}</p>
+    </section>
+  </div>
+
+  <section>
+    <h2>트렌드 근거 (원본 시장에서 왜 뜨는가)</h2>
+    <p>{{trend_rationale}}</p>
+    <p style="font-size:13px;color:var(--muted);margin:10px 0 4px;">근거 링크 (URL · 확인 날짜)</p>
+    <ul>
+      <li class="evidence-item"><a href="{{evidence_url_1}}">{{evidence_url_1}}</a> <span class="evidence-date">({{evidence_date_1}})</span></li>
+      <li class="evidence-item"><a href="{{evidence_url_2}}">{{evidence_url_2}}</a> <span class="evidence-date">({{evidence_date_2}})</span></li>
+      {{evidence_links_more}}
+    </ul>
+  </section>
+
+  <section>
+    <h2>예상 사용자 반응</h2>
+    <p><strong>긍정 시나리오:</strong> {{expected_positive}}</p>
+    <p><strong>리스크:</strong> {{expected_risk}}</p>
+  </section>
+
+  <section class="risk">
+    <h2>카피 리스크 · 차별화 (현지화)</h2>
+    <p class="principle">원칙: 기능·컨셉 참고는 가능 / 이름·아이콘·그래픽·문구·고유 브랜드 요소 모방은 금지.</p>
+    <p>카피 리스크 판정: <strong>{{copyright_verdict}}</strong><span class="verdict-badge">{{copyright_verdict_label}}</span></p>
+    <p>{{copyright_compliance_note}} <!-- 무엇을 기능적으로만 참고했고, 이름·아이콘·그래픽을 어떻게 독자적으로 새로 만들었는지 구체적으로 서술 --></p>
+    <p style="font-size:13px;color:var(--muted);margin:14px 0 4px;">타겟 시장 현지화 차별 요소</p>
+    <ul>{{differentiators}}</ul>
+  </section>
+
+  <section>
+    <h2>핵심 기능</h2>
+    <p style="font-size:13px;color:var(--muted);margin:0 0 10px;">정확히 3개(MVP 범위)</p>
+    <ul>{{core_features}}</ul>
+  </section>
+
+  <section>
+    <h2>수익모델</h2>
+    <p>{{monetization}}</p>
+  </section>
+</div>
+</body>
+</html>

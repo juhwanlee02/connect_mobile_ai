@@ -1,0 +1,28 @@
+{
+  "name": "connect-pc-mobile-claude",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/launch.ts",
+    "gen-license": "tsx scripts/gen-license.ts",
+    "set-password": "tsx scripts/set-password.ts",
+    "dev:server": "tsx src/server/index.ts",
+    "dev:cli": "tsx src/cli/index.ts",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "cross-spawn": "^7.0.6",
+    "qrcode": "^1.5.4",
+    "tsx": "^4.19.0",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/cross-spawn": "^6.0.6",
+    "@types/node": "^22.0.0",
+    "@types/qrcode": "^1.5.6",
+    "@types/ws": "^8.5.12",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>connect-pc-mobile-claude 설정</title>
+  <style>
+    :root { --bg:#12161B; --surface:#1B2129; --surface2:#232B35; --line:#2C3540;
+      --ink:#E8ECEF; --sub:#8B94A0; --run:#4C8DFF; --wait:#E5A83B; --done:#4CAF80;
+      --err:#E06055; --accent:#3D6B5C; }
+    * { box-sizing: border-box; margin: 0; }
+    [hidden] { display: none !important; }
+    body { background: var(--bg); color: var(--ink); font-family: "Apple SD Gothic Neo","Pretendard","Noto Sans KR",system-ui,sans-serif; font-size: 15px; line-height: 1.65; }
+    /* 데스크톱 도구 — 화면을 넓게 쓴다(문서를 읽고 고치는 페이지) */
+    main { max-width: min(1160px, 94vw); margin: 0 auto; padding: 32px 24px 80px; }
+    h1 { font-size: 22px; margin-bottom: 4px; }
+    .sub { color: var(--sub); font-size: 13px; margin-bottom: 18px; }
+    .tabs { display: flex; gap: 8px; margin: 18px 0; flex-wrap: wrap; }
+    .tabs button { border: 1px solid var(--line); background: var(--surface2); color: var(--sub); border-radius: 999px; padding: 9px 18px; font-weight: 700; font-size: 14px; cursor: pointer; }
+    .tabs button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px 24px; margin: 12px 0; }
+    .card h2 { font-size: 17px; margin-bottom: 10px; }
+    label { display: block; color: var(--sub); font-size: 13px; margin: 12px 0 5px; }
+    input[type=text], input[type=password], textarea { width: 100%; background: var(--surface2); color: var(--ink); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 15px; }
+    input:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+    /* 좁은 폼(계정)은 굳이 전체 폭을 안 쓴다 */
+    #tab-account input { max-width: 480px; }
+    /* 프롬프트·서식 편집기: 이 페이지의 본체 — 넓고 높게, 읽기 좋은 줄간 */
+    textarea { font: 13.5px/1.75 ui-monospace, Menlo, Consolas, monospace; min-height: 62vh; resize: vertical;
+      padding: 18px 22px; border-radius: 12px; tab-size: 2; }
+    .btn { border: 0; border-radius: 10px; padding: 10px 16px; font-weight: 700; cursor: pointer; margin-top: 10px; }
+    .btn.primary { background: var(--wait); color: #1A1206; }
+    .btn.ghost { background: var(--surface2); color: var(--ink); }
+    .btn.danger { background: rgba(224,96,85,.15); color: var(--err); }
+    .row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .spacer { flex: 1; }
+    .hint { color: var(--sub); font-size: 12px; }
+    .ok { color: var(--done); } .err { color: var(--err); }
+    #qrImg { background: #fff; border-radius: 10px; padding: 8px; }
+    .listrow { display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--line); padding: 8px 0; }
+    .listrow:last-child { border-bottom: 0; }
+    #toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: 20px; background: var(--surface2); border: 1px solid var(--line); color: var(--ink); padding: 10px 16px; border-radius: 10px; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>🛠 connect-pc-mobile-claude 설정</h1>
+  <p class="sub">이 페이지는 이 PC에서만 열려요(외부 접근 불가).</p>
+
+  <div class="card" id="connectCard">
+    <h2>📱 폰 접속</h2>
+    <div class="row">
+      <img id="qrImg" width="160" height="160" alt="접속 QR" hidden />
+      <div>
+        <p>아이디: <b id="infoId">…</b></p>
+        <p class="hint" id="infoUrl">주소 준비 중… (터널이 뜨면 자동 표시)</p>
+        <p><a id="infoLink" target="_blank" rel="noreferrer"></a></p>
+        <p class="hint">폰 카메라로 QR을 찍으면 아이디가 입력된 로그인 화면이 열려요. 비밀번호만 넣으면 끝.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button data-tab="account" class="active">계정</button>
+    <button data-tab="tpl">파이프라인 템플릿</button>
+    <button data-tab="doc">산출물 템플릿</button>
+  </div>
+
+  <section id="tab-account" class="card">
+    <h2>로그인 계정</h2>
+    <label>아이디 (자유롭게 — 대소문자는 구분하지 않아요)</label>
+    <input type="text" id="accId" autocomplete="off" />
+    <label>새 비밀번호</label>
+    <input type="password" id="accPw" autocomplete="new-password" />
+    <button class="btn primary" id="accSave">저장</button>
+    <p class="hint">저장하면 다음 로그인부터 적용돼요. 폰에 저장된 자동 로그인은 그대로 유지됩니다.</p>
+    <p id="accMsg"></p>
+  </section>
+
+  <section id="tab-tpl" class="card" hidden>
+    <h2>파이프라인 템플릿</h2>
+    <p class="hint">기본 프롬프트를 편집하거나 빈 템플릿을 처음부터 만들 수 있습니다. 폰의 [⚙️ 템플릿]과 같은 데이터입니다.</p>
+    <button class="btn primary" id="tplCreate">＋ 새 빈 템플릿</button>
+    <div id="tplList"></div>
+    <div id="tplEdit" hidden>
+      <div class="row"><button class="btn ghost" id="tplEditBack">‹ 목록으로</button><b id="tplEditName"></b></div>
+      <div id="tplSteps"></div>
+      <button class="btn ghost" id="tplAddStep">＋ 스텝 추가</button>
+    </div>
+    <div id="tplPrompt" hidden>
+      <div class="row"><button class="btn ghost" id="tplPromptBack">‹ 스텝으로</button><b id="tplPromptName"></b></div>
+      <textarea id="tplPromptBody" spellcheck="false"></textarea>
+      <div class="row">
+        <button class="btn primary" id="tplPromptSave">저장</button>
+        <button class="btn ghost" id="tplPromptReset" hidden>기본값 복원</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-doc" class="card" hidden>
+    <h2>산출물 템플릿 (PRD·아이디어 노트 등 서식)</h2>
+    <p class="hint">새로 만드는 프로젝트에 적용되는 문서 서식이에요. 이미 만든 프로젝트에는 영향이 없어요.</p>
+    <div id="docList"></div>
+    <div id="docEdit" hidden>
+      <div class="row"><button class="btn ghost" id="docBack">‹ 목록으로</button><b id="docName"></b></div>
+      <textarea id="docBody" spellcheck="false"></textarea>
+      <div class="row">
+        <button class="btn primary" id="docSave">저장</button>
+        <button class="btn ghost" id="docReset" hidden>원본으로 복원</button>
+      </div>
+    </div>
+  </section>
+</main>
+<div id="toast" hidden></div>
+<script type="module" src="/setup/setup.js"></script>
+</body>
+</html>

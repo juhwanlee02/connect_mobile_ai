@@ -1,0 +1,47 @@
+{
+  "app": { "name": "쿠키의 일기장", "version": "1.0.0" },
+  "palette": {
+    "bg1": "#FFF1ED",
+    "bg2": "#FCE3DD",
+    "accent": "#F7B7B0",
+    "ink": "#2D2A26",
+    "sub": "#8A8580"
+  },
+  "font": {
+    "family": "wooju",
+    "src": "assets/fonts/wooju.ttf"
+  },
+
+  "_comment": "Frame is chosen per block: ios=iphone CSS mockup, ipad=ipad CSS mockup, android=none (flat raw screenshot + caption, per Google's recommendation). Override per slide with a \"frame\" field if needed.",
+  "_comment_android": "Only iOS is captured. The android block does NOT capture on an emulator — omit each slide's \"screenshot\" and it inherits the matching iOS capture (by \"out\" filename, else by index), reformatted to the Android store size (1080x1920). Set \"screenshot\" explicitly only to override with a different image.",
+
+  "ios": {
+    "size": { "w": 1320, "h": 2868 },
+    "out": "deploy/screenshots/ios",
+    "slides": [
+      { "screenshot": "deploy/screenshots/raw/ios/01-home.png", "headline": "매일의 산책을 기록해요", "sub": "쿠키와 함께한 하루하루", "out": "01-home.png" },
+      { "screenshot": "deploy/screenshots/raw/ios/02-voice.png", "headline": "목소리로 남기는 일기", "sub": "말하면 자동으로 정리돼요", "out": "02-voice.png" },
+      { "screenshot": "deploy/screenshots/raw/ios/03-calendar.png", "headline": "한눈에 보는 추억", "sub": "달력으로 모아보기", "out": "03-calendar.png" },
+      { "screenshot": "deploy/screenshots/raw/ios/04-stickers.png", "headline": "귀여운 스티커로 꾸미기", "sub": "", "out": "04-stickers.png" }
+    ]
+  },
+
+  "ipad": {
+    "size": { "w": 2064, "h": 2752 },
+    "out": "deploy/screenshots/ipad",
+    "slides": [
+      { "screenshot": "deploy/screenshots/raw/ipad/01-home.png", "headline": "큰 화면으로 보는 추억", "sub": "iPad에서 더 풍성하게", "out": "01-home.png" },
+      { "screenshot": "deploy/screenshots/raw/ipad/02-calendar.png", "headline": "한눈에 보는 추억", "sub": "달력으로 모아보기", "out": "02-calendar.png" }
+    ]
+  },
+
+  "android": {
+    "size": { "w": 1080, "h": 1920 },
+    "out": "deploy/screenshots/android",
+    "slides": [
+      { "headline": "매일의 산책을 기록해요", "sub": "쿠키와 함께한 하루하루", "out": "01-home.png" },
+      { "headline": "목소리로 남기는 일기", "sub": "말하면 자동으로 정리돼요", "out": "02-voice.png" }
+    ],
+    "featureGraphic": { "headline": "쿠키의 일기장", "sub": "반려견과의 매일을 기록하는 가장 귀여운 방법", "out": "feature-graphic.png" }
+  }
+}

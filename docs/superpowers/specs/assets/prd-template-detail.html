@@ -1,0 +1,226 @@
+<title>PRD 템플릿 상세 — 습관 트래커 예시</title>
+<style>
+  :root{
+    --bg:#F3F2EE; --ink:#23272B; --sub:#6B7075; --line:#DDDBD4; --card:#FFFFFF;
+    --accent:#3D6B5C; --accent-soft:rgba(61,107,92,.09);
+    --wait:#B97F1E; --run:#2F66C4; --must:#3D6B5C; --should:#2F66C4; --could:#8A6FB8; --wont:#9A9FA5;
+    --phone-bg:#12161B; --phone-surface:#1B2129; --phone-surface2:#232B35; --phone-ink:#E8ECEF; --phone-sub:#8B94A0; --phone-line:#2C3540;
+    --code:#EDECE6;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#15181B; --ink:#E6E4DF; --sub:#9A9FA5; --line:#2C3136; --card:#1D2126; --accent:#6FAE9B; --accent-soft:rgba(111,174,155,.12); --wait:#E5A83B; --run:#7AA7EF; --must:#6FAE9B; --should:#7AA7EF; --could:#B49BE0; --wont:#7A8087; --code:#171A1E; }
+  }
+  :root[data-theme="dark"]{ --bg:#15181B; --ink:#E6E4DF; --sub:#9A9FA5; --line:#2C3136; --card:#1D2126; --accent:#6FAE9B; --accent-soft:rgba(111,174,155,.12); --wait:#E5A83B; --run:#7AA7EF; --must:#6FAE9B; --should:#7AA7EF; --could:#B49BE0; --wont:#7A8087; --code:#171A1E; }
+  :root[data-theme="light"]{ --bg:#F3F2EE; --ink:#23272B; --sub:#6B7075; --line:#DDDBD4; --card:#FFFFFF; --accent:#3D6B5C; --accent-soft:rgba(61,107,92,.09); --wait:#B97F1E; --run:#2F66C4; --must:#3D6B5C; --should:#2F66C4; --could:#8A6FB8; --wont:#9A9FA5; --code:#EDECE6; }
+
+  *{box-sizing:border-box; margin:0}
+  body{background:var(--bg); color:var(--ink); font-family:"Apple SD Gothic Neo","Pretendard","Noto Sans KR",system-ui,sans-serif; line-height:1.65; padding:48px 24px 90px}
+  .wrap{max-width:1080px; margin:0 auto}
+  .eyebrow{font-size:12px; letter-spacing:.14em; color:var(--accent); font-weight:700; text-transform:uppercase}
+  h1{font-size:clamp(24px,3.2vw,32px); line-height:1.25; text-wrap:balance; margin:8px 0 10px; font-weight:800}
+  .lede{color:var(--sub); max-width:64ch}
+
+  .top{display:flex; gap:36px; flex-wrap:wrap; align-items:flex-start; margin:34px 0 46px}
+  .top .txt{flex:1; min-width:280px}
+  .top .txt h2{font-size:16px; margin-bottom:8px}
+  .top .txt p{font-size:14px; color:var(--sub); margin-bottom:12px}
+  .flow{display:flex; flex-direction:column; gap:6px; font-size:13px}
+  .flow div{background:var(--card); border:1px solid var(--line); border-radius:8px; padding:8px 12px}
+  .flow b{color:var(--accent)}
+
+  /* phone */
+  .phone{width:300px; height:560px; background:var(--phone-bg); border-radius:34px; border:1px solid var(--line);
+    box-shadow:0 24px 48px -24px rgba(0,0,0,.45); padding:14px 12px 12px; color:var(--phone-ink);
+    display:flex; flex-direction:column; overflow:hidden; flex:none}
+  .notch{width:100px; height:20px; background:#000; border-radius:11px; margin:0 auto 10px; flex:none}
+  .screen{flex:1; display:flex; flex-direction:column; gap:9px; font-size:12px; overflow:hidden}
+  .appbar{display:flex; align-items:center; gap:8px; font-size:13px}
+  .appbar .t{font-weight:700}
+  .chip{font-size:10px; font-weight:700; padding:3px 8px; border-radius:999px}
+  .chip.wait{background:rgba(229,168,59,.18); color:#E5A83B}
+  .pc{background:var(--phone-surface); border:1px solid var(--phone-line); border-radius:12px; padding:11px}
+  .pc .h{font-weight:700; font-size:12.5px}
+  .pc .d{color:var(--phone-sub); font-size:11px; margin-top:3px}
+  .kv{display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:8px}
+  .kv div{background:var(--phone-surface2); border-radius:8px; padding:7px 9px; font-size:10.5px; color:var(--phone-sub)}
+  .kv b{display:block; color:var(--phone-ink); font-size:13px; margin-top:1px}
+  .pbtn{border:0; border-radius:9px; padding:9px; text-align:center; font-weight:700; font-size:12px; width:100%; margin-top:8px}
+  .pbtn.g{background:var(--phone-surface2); color:var(--phone-ink); font-weight:600}
+  .pbtn.p{background:#E5A83B; color:#1A1206}
+  .toc{color:var(--phone-sub); font-size:10.5px; line-height:1.9}
+  .toc b{color:var(--phone-ink); font-weight:600}
+
+  /* document */
+  .doc{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:clamp(22px,4vw,46px); position:relative}
+  .doc-head{border-bottom:2px solid var(--ink); padding-bottom:18px; margin-bottom:8px}
+  .doc-head .file{font-family:ui-monospace,Menlo,monospace; font-size:12px; color:var(--sub)}
+  .doc-head h2{font-size:24px; font-weight:800; margin:6px 0 4px}
+  .doc-head .meta{font-size:13px; color:var(--sub); display:flex; gap:16px; flex-wrap:wrap}
+  .sec{padding:26px 0 6px; border-bottom:1px solid var(--line)}
+  .sec:last-child{border-bottom:0}
+  .sec-head{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin-bottom:12px}
+  .sec-head h3{font-size:17px; font-weight:800}
+  .sec-head .no{font-family:ui-monospace,Menlo,monospace; font-size:12px; color:var(--accent); font-weight:700}
+  .consumer{margin-left:auto; font-size:11.5px; background:var(--accent-soft); color:var(--accent); border-radius:999px; padding:4px 12px; font-weight:600}
+  .sec p{font-size:14.5px; max-width:70ch; margin-bottom:10px}
+  .sec ul{font-size:14.5px; padding-left:20px; margin-bottom:10px}
+  .sec li{margin-bottom:4px}
+  .hint{font-size:12.5px; color:var(--sub); background:var(--accent-soft); border-radius:8px; padding:9px 13px; margin:6px 0 14px; max-width:74ch}
+  .hint b{color:var(--accent)}
+
+  table{width:100%; border-collapse:collapse; font-size:13.5px; margin:4px 0 16px}
+  th{text-align:left; font-size:11.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--sub); padding:8px 10px; border-bottom:2px solid var(--line); white-space:nowrap}
+  td{padding:9px 10px; border-bottom:1px solid var(--line); vertical-align:top}
+  .tblwrap{overflow-x:auto}
+  code{font-family:ui-monospace,Menlo,monospace; font-size:12.5px; background:var(--code); border-radius:5px; padding:2px 6px}
+  .tag{font-size:10.5px; font-weight:800; letter-spacing:.04em; padding:3px 9px; border-radius:999px; white-space:nowrap}
+  .tag.must{background:var(--accent-soft); color:var(--must)}
+  .tag.should{background:rgba(47,102,196,.1); color:var(--should)}
+  .tag.could{background:rgba(138,111,184,.12); color:var(--could)}
+  .tag.wont{background:rgba(150,155,160,.14); color:var(--wont)}
+  .persona{display:flex; gap:14px; flex-wrap:wrap; margin-bottom:14px}
+  .persona div{flex:1; min-width:230px; border:1px solid var(--line); border-radius:12px; padding:14px 16px; font-size:13.5px}
+  .persona b{display:block; margin-bottom:4px}
+  .persona span{color:var(--sub)}
+  .foot{margin-top:40px; font-size:13px; color:var(--sub); max-width:74ch}
+</style>
+
+<div class="wrap">
+  <div class="eyebrow">App Factory · PRD Template</div>
+  <h1>PRD는 이렇게 생겼습니다 — 전 섹션 실물 예시</h1>
+  <p class="lede">2단계 산출물 <code>docs/PRD.md</code>의 표준 템플릿을 "습관 트래커" 예시로 전부 채운 모습. 섹션 구조는 고정이고(스킬이 추가·삭제 못 함), 각 섹션 오른쪽 배지는 <b>이 내용을 파이프라인의 누가 소비하는지</b>입니다.</p>
+
+  <div class="top">
+    <div class="txt">
+      <h2>폰에서는 이렇게 보입니다 →</h2>
+      <p>PRD 단계가 끝나면 폰에 요약 카드가 먼저 오고, [전문 보기]로 아래 문서 전체를 마크다운 뷰어로 읽습니다. 채팅 피드백으로 몇 번이든 고친 뒤 컨펌하면 목업 단계가 열립니다.</p>
+      <div class="flow">
+        <div><b>왜 섹션이 고정인가</b> — 다음 단계 스킬들이 기계적으로 읽어야 하기 때문. 화면 목록이 없으면 목업이, 데이터 모델이 없으면 개발이 설 곳이 없음</div>
+        <div><b>화면 ID가 관통 키</b> — §4의 ID가 목업 파일명 → Flutter 라우트 → 스토어 스크린샷까지 그대로 이어짐</div>
+        <div><b>백엔드 결정은 여기서 예고</b> — §5·§6이 4단계 산정(비용 리스크 표)의 입력이 됨</div>
+      </div>
+    </div>
+    <div class="phone"><div class="notch"></div><div class="screen">
+      <div class="appbar"><span>‹</span><span class="t">습관 트래커</span><span style="flex:1"></span><span class="chip wait">컨펌 대기</span></div>
+      <div class="pc">
+        <div class="h">📋 PRD v1.0 요약</div>
+        <div class="d">화면 4개 · Must 기능 5개 · 백엔드 없음</div>
+        <div class="kv">
+          <div>기능(Must/Should)<b>5 + 3</b></div>
+          <div>화면<b>4개</b></div>
+          <div>백엔드<b>없음 · 로컬</b></div>
+          <div>수익화<b>광고 2종</b></div>
+        </div>
+      </div>
+      <div class="pc">
+        <div class="h">목차</div>
+        <div class="toc">
+          <b>1</b> 문제 정의 · <b>2</b> 타겟 사용자<br>
+          <b>3</b> 기능 목록 (MoSCoW)<br>
+          <b>4</b> 화면 목록 ← 목업의 입력<br>
+          <b>5</b> 데이터 모델 · <b>6</b> 수익화<br>
+          <b>7</b> 성공 지표 · <b>8</b> 앱 메타
+        </div>
+      </div>
+      <button class="pbtn g">전문 보기 ▸</button>
+      <button class="pbtn p">✓ 컨펌하고 목업 단계로</button>
+      <div style="flex:1"></div>
+      <div class="pc" style="border-radius:999px; padding:8px 13px; color:var(--phone-sub); font-size:11px">피드백 보내기… ("위젯 기능도 넣어줘")</div>
+    </div></div>
+  </div>
+
+  <!-- ================= 문서 본문 ================= -->
+  <div class="doc">
+    <div class="doc-head">
+      <div class="file">projects/habit-tracker/docs/PRD.md · templates/PRD.template.md 기반</div>
+      <h2>습관 트래커 — 제품 요구사항 문서</h2>
+      <div class="meta"><span>버전 v1.0</span><span>상태: 컨펌 대기</span><span>아이디어 출처: IDEAS.md 카드 #2 (원본: Streaks)</span></div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><span class="no">§1</span><h3>문제 정의</h3><span class="consumer">소비: 전 단계의 판단 기준</span></div>
+      <p>습관 앱은 많지만 대부분 기록이 "숙제"처럼 무겁다 — 가입 요구, 과한 설정, 느린 첫 화면. 그래서 3일 쓰고 지운다. 이 앱은 <b>열자마자 체크 한 번</b>이 전부인 최소 마찰 습관 트래커다. 로그인 없음, 서버 없음, 오프라인 완전 동작.</p>
+      <div class="hint"><b>템플릿 규칙</b> — 3~5문장. "무엇을 안 만들 것인가"가 드러나야 함. 여기 적힌 원칙이 이후 모든 기능 논쟁의 심판.</div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><span class="no">§2</span><h3>타겟 사용자</h3><span class="consumer">소비: 릴리즈(스토어 문구 톤)</span></div>
+      <div class="persona">
+        <div><b>주 타겟 — "작심삼일 반복자" (25–39)</b><span>새해·월초마다 습관 앱을 설치하고 며칠 만에 이탈한 경험 2회 이상. 복잡한 기능보다 "끊기지 않는 기분(스트릭)"이 동기.</span></div>
+        <div><b>부 타겟 — "미니멀 기록가"</b><span>노션·수첩에 수동 기록 중. 광고에 관대하지 않으므로 광고 빈도 설계에 반영(§6).</span></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><span class="no">§3</span><h3>기능 목록 — MoSCoW</h3><span class="consumer">소비: 산정(4단계) · 개발(5단계)</span></div>
+      <div class="tblwrap"><table>
+        <tr><th>우선순위</th><th>기능</th><th>설명</th><th>관련 화면</th></tr>
+        <tr><td><span class="tag must">MUST</span></td><td>습관 등록·편집</td><td>이름, 아이콘(내장 24종), 반복 요일. 최대 12개</td><td><code>habit-edit</code></td></tr>
+        <tr><td><span class="tag must">MUST</span></td><td>원탭 체크</td><td>홈에서 탭 1회로 오늘 완료. 실수 방지 되돌리기 3초</td><td><code>home</code></td></tr>
+        <tr><td><span class="tag must">MUST</span></td><td>스트릭(연속 기록)</td><td>습관별 연속 일수 + 최장 기록. 끊기면 회색화</td><td><code>home</code> <code>stats</code></td></tr>
+        <tr><td><span class="tag must">MUST</span></td><td>로컬 저장</td><td>SharedPreferences. 앱 삭제 전까지 영구, 서버 통신 0</td><td>전체</td></tr>
+        <tr><td><span class="tag must">MUST</span></td><td>다크/라이트 테마</td><td>시스템 연동 + 수동 전환 (스킬: color_theme)</td><td><code>settings</code></td></tr>
+        <tr><td><span class="tag should">SHOULD</span></td><td>잔디밭 통계</td><td>주/월 히트맵, 차분한 4단계 그라데이션</td><td><code>stats</code></td></tr>
+        <tr><td><span class="tag should">SHOULD</span></td><td>리마인더</td><td>습관별 로컬 알림(서버 푸시 아님 — 비용 0 유지)</td><td><code>habit-edit</code></td></tr>
+        <tr><td><span class="tag should">SHOULD</span></td><td>다국어 10개</td><td>ko/en/ja/zh/es/pt/fr/de/hi/vi (스킬: localization)</td><td>전체</td></tr>
+        <tr><td><span class="tag could">COULD</span></td><td>데이터 내보내기</td><td>CSV 공유 시트. v1.1 후보</td><td><code>settings</code></td></tr>
+        <tr><td><span class="tag wont">WON'T v1</span></td><td>로그인·클라우드 동기화</td><td>§1 원칙 + 비용 0 원칙 위배. 계정삭제 의무도 회피</td><td>—</td></tr>
+        <tr><td><span class="tag wont">WON'T v1</span></td><td>소셜 공유·친구 기능</td><td>백엔드 필요. 수익모델이 정당화 못 함</td><td>—</td></tr>
+      </table></div>
+      <div class="hint"><b>템플릿 규칙</b> — WON'T에는 반드시 "왜 안 하는지"를 적음. 4단계 산정에서 기능을 가감하면 이 표가 갱신되고, 컨펌 카드에 diff가 표시됨(재승인).</div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><span class="no">§4</span><h3>화면 목록</h3><span class="consumer">소비: 목업 · 개발 라우트 · 스크린샷</span></div>
+      <div class="tblwrap"><table>
+        <tr><th>화면 ID</th><th>목적</th><th>핵심 구성요소</th><th>라우트/딥링크</th><th>목업 파일</th><th>스토어 스샷</th></tr>
+        <tr><td><code>home</code></td><td>오늘의 체크 (첫 화면, 1초 내 로드)</td><td>날짜 헤더 · 습관 카드 리스트(탭=체크) · 스트릭 뱃지 · ＋버튼</td><td><code>/home</code></td><td><code>mockup/home.html</code></td><td>슬라이드 1 (히어로)</td></tr>
+        <tr><td><code>habit-edit</code></td><td>습관 추가·수정</td><td>이름 입력 · 아이콘 그리드 · 요일 선택 · 리마인더 시간 · 삭제</td><td><code>/habit-edit?id=</code></td><td><code>mockup/habit-edit.html</code></td><td>—</td></tr>
+        <tr><td><code>stats</code></td><td>잔디밭·스트릭 통계</td><td>월 히트맵 · 습관별 최장기록 · 주간 달성률 링</td><td><code>/stats</code></td><td><code>mockup/stats.html</code></td><td>슬라이드 2</td></tr>
+        <tr><td><code>settings</code></td><td>테마·언어·정보</td><td>테마 토글 · 언어 선택 · 버전 · 개인정보처리방침 링크</td><td><code>/settings</code></td><td><code>mockup/settings.html</code></td><td>—</td></tr>
+      </table></div>
+      <div class="hint"><b>이 표가 파이프라인의 등뼈</b> — ID는 kebab-case 고정(Dart 파일은 <code>habit_edit</code>로 기계 변환). 라우트는 스크린샷 자동 캡처의 딥링크로 쓰이고, 개발 완료 게이트는 "이 표 ↔ 실제 라우트 테이블 1:1"을 자동 대조. 스샷 열은 7단계 매니페스트의 초안.</div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><span class="no">§5</span><h3>데이터 모델</h3><span class="consumer">소비: 개발(5단계)</span></div>
+      <div class="tblwrap"><table>
+        <tr><th>엔티티</th><th>필드</th><th>저장</th></tr>
+        <tr><td><code>Habit</code></td><td>id · name · icon · repeatDays[7] · reminderTime? · createdAt · archived</td><td rowspan="3">SharedPreferences (JSON 직렬화)<br>서버·DB 없음</td></tr>
+        <tr><td><code>CheckRecord</code></td><td>habitId · date(yyyy-MM-dd) — 존재 = 완료. 스트릭은 조회 시 계산(저장 안 함)</td></tr>
+        <tr><td><code>AppSettings</code></td><td>themeMode · locale · lastReviewPromptAt</td></tr>
+      </table></div>
+      <div class="hint"><b>템플릿 규칙</b> — "파생값은 저장하지 않는다"처럼 구현 방침까지 적으면 개발 단계 스킬의 재량 폭이 줄어 산출물이 안정됨.</div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><span class="no">§6</span><h3>수익화 계획</h3><span class="consumer">소비: 산정 · 릴리즈(심사 설문)</span></div>
+      <ul>
+        <li><b>전면광고</b> — 앱 시작 스플래시 1회 (스킬: interstitial-splash-ad, 타임아웃 3.5s — 첫 화면 1초 원칙과 충돌 시 광고가 양보)</li>
+        <li><b>보상형 광고</b> — 프리미엄 테마 6종 잠금해제 티켓 (스킬: reward-ads)</li>
+        <li>구독·인앱결제 없음(v1). <b>릴리즈 전 체크</b>: 테스트 광고 ID → 실제 AdMob 유닛 ID 교체, Play 데이터 안전 설문에 "광고 ID 수집" 신고</li>
+      </ul>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><span class="no">§7</span><h3>성공 지표</h3><span class="consumer">소비: 출시 후 v2 사이클 판단</span></div>
+      <ul>
+        <li>D7 리텐션 ≥ 15% · 설치→첫 습관 등록 전환 ≥ 60% · 일평균 체크 수 ≥ 2</li>
+        <li>광고 eCPM 기준 1만 MAU에서 월 수익 추정 — 운영비 0이므로 전액 마진 (4단계 산정에서 검증)</li>
+      </ul>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><span class="no">§8</span><h3>앱 메타 (스토어 제출용)</h3><span class="consumer">소비: 개발(설정) · 릴리즈(리스팅)</span></div>
+      <div class="tblwrap"><table>
+        <tr><th>항목</th><th>값</th></tr>
+        <tr><td>applicationId / bundleId</td><td><code>com.acme.habittracker</code> (com.example 금지 — 여기서 확정, 이후 변경 불가급)</td></tr>
+        <tr><td>표시 이름</td><td>ko "하루한칸" · en "DailyCell" — 원본앱(Streaks)과 자모 유사성 없음 확인</td></tr>
+        <tr><td>지원 기기</td><td>iPhone 전용(iPad 미지원 → 스크린샷 iPad 캡처 생략) · Android phone</td></tr>
+        <tr><td>백엔드 결정 트리 결과</td><td>①로컬로 충분 → <b>백엔드 없음</b> (4단계에서 비용 리스크 표 생략, 가드레일 해당 없음)</td></tr>
+      </table></div>
+    </div>
+  </div>
+
+  <p class="foot">이 문서 전체가 <code>templates/PRD.template.md</code>의 고정 섹션 §1~§8을 채운 결과물입니다. 스킬은 섹션을 추가·삭제할 수 없고(해당 없으면 "해당 없음" 명시), 컨펌 시 필수 섹션 존재가 자동 검증되어 pipeline.json에 기록됩니다. 4단계에서 기능이 가감되면 §3·§4가 갱신되고 컨펌 카드에 diff로 표시됩니다.</p>
+</div>

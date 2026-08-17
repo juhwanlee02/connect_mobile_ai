@@ -1,0 +1,5 @@
+{
+  "appName": "플러터 스타터",
+  "homeTitle": "홈",
+  "greeting": "안녕하세요, {name}님!"
+}

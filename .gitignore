@@ -1,0 +1,30 @@
+# Dependencies and OS files
+node_modules/
+.DS_Store
+
+# Runtime credentials and local settings
+.connect-error.log
+.connect-output.log
+.relay-password
+.relay-auth.json
+.relay-auth.json.tmp-*
+.host-settings.json
+.host-settings.json.tmp-*
+license.txt
+
+# Local deployment state
+.firebaserc
+.firebase/
+
+# User-generated projects, memories, logs, and attachments
+projects/**
+
+# User-customized pipelines and template backups
+pipelines/
+templates/.orig/
+
+# Interrupted atomic writes
+*.tmp-*
+
+# Local trash
+.trash/

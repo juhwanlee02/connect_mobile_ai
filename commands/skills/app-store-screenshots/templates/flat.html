@@ -1,0 +1,42 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<style>
+  {{FONT_FACE}}
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; }
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: linear-gradient(160deg, {{BG1}} 0%, {{BG2}} 100%);
+    font-family: {{FONT_FAMILY}}, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+    overflow: hidden;
+  }
+  .caption { width: 88%; text-align: center; padding-top: 6vh; }
+  .headline { color: {{INK}}; font-weight: 800; font-size: 4.4vh; line-height: 1.22; letter-spacing: -0.01em; }
+  .sub { color: {{SUB}}; font-weight: 500; font-size: 2.4vh; line-height: 1.4; margin-top: 1.4vh; }
+  .stage { flex: 1; width: 100%; display: flex; align-items: center; justify-content: center; padding: 4vh 0 6vh; }
+  /* Google recommends raw screenshots (no device frame) for Play listings: just a soft card.
+     Fit by whichever dimension binds first so tall captures (e.g. 1080×2400) don't overflow. */
+  .shot {
+    max-width: 84%;
+    max-height: 100%;
+    border-radius: 4%;
+    overflow: hidden;
+    box-shadow: 0 3vh 7vh rgba(0,0,0,0.16);
+  }
+  .shot img { display: block; max-width: 100%; max-height: 100%; width: auto; height: auto; }
+</style>
+</head>
+<body>
+  <div class="caption">
+    <div class="headline">{{HEADLINE}}</div>
+    <div class="sub">{{SUBTEXT}}</div>
+  </div>
+  <div class="stage">
+    <div class="shot"><img src="{{SCREENSHOT}}" /></div>
+  </div>
+</body>
+</html>

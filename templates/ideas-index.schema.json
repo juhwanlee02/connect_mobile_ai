@@ -1,0 +1,71 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ideas-index.json — 전역 아이디어 중복 방지 인덱스",
+  "description": "위치: projectsRoot(`projects/`) 바로 안, 즉 프로젝트 디렉터리들의 형제 — 프로젝트 cwd(`projects/<이름>/`) 기준 `../ideas-index.json`(= `projects/ideas-index.json`)에 두는 단일 파일이다. 각 프로젝트의 IDEAS.md(그 프로젝트 회차의 후보 메타)와는 다른 파일이며, 모든 프로젝트에서 제안된 아이디어가 이 파일 하나에 누적된다. 스킬을 위한 규칙: (1) 이 파일은 IDEAS.md와 별개로 관리되며 pipeline.json의 artifacts 키에는 등록하지 않는다(프로젝트 소유 산출물이 아님). (2) 쓰기는 임시 파일 + rename으로 원자적으로 한다(여러 프로젝트가 동시에 아이디에이션을 실행할 수 있으므로 부분 쓰기로 다른 실행을 깨뜨리면 안 된다). (3) 항목 추가는 append한다. 미채택(adopted=null) 항목은 폰 UI의 삭제로 제거할 수 있다. adopted 필드는 채택 시점에 갱신 가능. (4) 빈 문자열보다 필드 자체를 정직하게 채운다 — 알 수 없는 값이라도 생략하지 말 것(필수 필드는 required로 강제).",
+  "$comment": "중복 컷 규칙 — 새 후보를 이 인덱스와 대조해 다음 순서로 판단한다. 1) slug 완전 일치 → 무조건 컷(같은 아이디어로 간주), 다음 순위 후보로 보충. 2) direction(시장방향)과 category가 모두 완전 일치하는 기존 항목이 있으면 컷 우선 검토 대상으로 표시하고, one_liner의 의미가 사실상 같은 벤치마크 앱의 재탕이거나 핵심 기능이 동일하면 컷한다(방향+카테고리만 같고 컨셉이 명확히 다르면 컷하지 않음). 3) 의미 유사 판단은 slug/one_liner 문자열 비교만으로 부족하면 사람이 읽어 확인 가능한 수준으로 근거를 IDEAS.md의 '전역 중복 방지 대조 결과' 줄에 남긴다. 컷된 후보는 이 인덱스에 항목으로 남기지 않는다(채택되지 않고 제안조차 안 된 것으로 취급). §12.3의 Play 반복 콘텐츠(spam) 정책 리스크 완화가 이 인덱스의 목적이다.",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": ["slug", "one_liner", "detail", "adopted"],
+    "additionalProperties": true,
+    "properties": {
+      "slug": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*$",
+        "description": "kebab-case, 영문 소문자 시작. 전역 중복 판정의 1차 키."
+      },
+      "direction": {
+        "type": "string",
+        "description": "선택 정보. 시장 방향이나 아이디어 출발 방식을 자유롭게 기록."
+      },
+      "category": {
+        "type": "string",
+        "description": "카테고리(예: 생산성/도구, 소셜/커뮤니티 등). direction+category 조합이 중복 컷 2차 기준."
+      },
+      "one_liner": {
+        "type": "string",
+        "description": "대표 소개 한 줄. 채팅·목록에만 보인다. 상세 정보는 detail에 넣는다."
+      },
+      "detail": {
+        "type": "string",
+        "description": "자유 형식의 상세 설명. 목록에서는 클릭해야 보인다."
+      },
+      "proposed_at": {
+        "type": "string",
+        "format": "date",
+        "description": "제안일 (YYYY-MM-DD). 이 아이디어가 어느 회차의 IDEAS.md에서 나왔는지의 시점."
+      },
+      "adopted": {
+        "description": "채택 여부. 채택되어 프로젝트로 진행 중/완료면 프로젝트명(문자열), 아직 채택되지 않았으면 null.",
+        "oneOf": [
+          { "type": "string", "minLength": 1, "description": "채택된 프로젝트명(projects/<이름>과 동일)." },
+          { "type": "null", "description": "아직 어느 프로젝트에도 채택되지 않음." }
+        ]
+      },
+      "monetization": {
+        "type": "string",
+        "description": "수익모델. 예: 광고(전면/보상형)·구독·인앱결제·무료 등. 아이디어의 핵심 수익화 전략."
+      },
+      "source_app": {
+        "type": ["string", "null"],
+        "description": "선택 정보. 참고 앱이 있을 때만 기록."
+      },
+      "target_user": {
+        "type": ["string", "null"],
+        "description": "선택 정보. 예상 사용자가 있을 때만 기록."
+      },
+      "on_device_ai": {
+        "type": ["string", "object", "null"],
+        "description": "선택 정보. AI 또는 온디바이스 구현이 중요할 때만 기록."
+      },
+      "retention_loop": {
+        "type": ["string", "array", "null"],
+        "description": "선택 정보. 리텐션 설계가 중요할 때만 기록."
+      },
+      "operating_cost": {
+        "type": ["number", "object", "null"],
+        "description": "선택 정보. 비용 추정이 중요할 때만 기록."
+      }
+    }
+  }
+}

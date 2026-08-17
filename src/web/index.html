@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>connect-pc-mobile-claude</title>
+    <style>
+      /* 팔레트: docs/superpowers/specs/assets/pipeline-ux-mockup.html 확정 목업 기준 */
+      :root {
+        --bg:#12161B; --surface:#1B2129; --surface2:#232B35; --line:#2C3540;
+        --ink:#E8ECEF; --sub:#8B94A0;
+        --run:#4C8DFF; --wait:#E5A83B; --done:#4CAF80; --err:#E06055; --pend:#5A6572;
+        --accent:#3D6B5C;
+      }
+      * { box-sizing: border-box; margin: 0; }
+      [hidden] { display: none !important; }
+      html, body { height: 100%; overflow: hidden; }
+      body {
+        background: var(--bg); color: var(--ink);
+        font-family: "Apple SD Gothic Neo", "Pretendard", "Noto Sans KR", system-ui, sans-serif;
+        font-size: 14px; line-height: 1.6;
+      }
+      .screen { height: 100%; max-height: 100dvh; display: flex; flex-direction: column; gap: 10px; padding: 12px; overflow: hidden; min-height: 0; }
+
+      /* ---------- 앱바 ---------- */
+      .appbar { display: flex; align-items: center; gap: 8px; padding: 2px 4px; flex: none; }
+      .appbar .t { font-weight: 700; font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .appbar .spacer { flex: 1; }
+      .appbar .conn { font-size: 11px; color: var(--sub); }
+      .back { background: none; border: 0; color: var(--sub); font-size: 22px; line-height: 1; padding: 2px 8px 4px 2px; cursor: pointer; }
+      .dot-live { width: 8px; height: 8px; border-radius: 50%; background: var(--done); flex: none; }
+      @media (prefers-reduced-motion: no-preference) {
+        .dot-live { animation: pulse 2s infinite; }
+        @keyframes pulse { 50% { opacity: .4; } }
+      }
+
+      /* ---------- 상태 칩 ---------- */
+      .chip { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; flex: none; letter-spacing: .02em; }
+      .chip.run  { background: rgba(76,141,255,.16); color: var(--run); }
+      .chip.wait { background: rgba(229,168,59,.18); color: var(--wait); }
+      .chip.done { background: rgba(76,175,128,.16); color: var(--done); }
+      .chip.err  { background: rgba(224,96,85,.16);  color: var(--err); }
+      .chip.pend { background: rgba(90,101,114,.3);  color: var(--sub); }
+      .chip.q    { background: var(--surface2); color: var(--sub); font-weight: 600; }
+
+      /* ---------- 홈: 프로젝트 카드 ---------- */
+      #home-list { flex: 1 1 0%; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;
+        display: flex; flex-direction: column; gap: 10px; }
+      .pcard { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px; cursor: pointer; flex: none; }
+      .pcard .row { display: flex; align-items: center; gap: 8px; }
+      .pcard .name { font-weight: 700; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .pcard .meta { color: var(--sub); font-size: 11px; margin-top: 6px; display: flex; gap: 10px; align-items: center; }
+      .pcard .meta .spacer { flex: 1; }
+      .pcard.attn { border-color: var(--wait); box-shadow: 0 0 0 1px var(--wait) inset; }
+      .pcard.dim { opacity: .55; }
+      .minibar { height: 4px; border-radius: 2px; background: var(--surface2); margin-top: 10px; overflow: hidden; }
+      .minibar i { display: block; height: 100%; border-radius: 2px; background: var(--accent); }
+      .minibar i.full { background: var(--done); }
+      .newbtn { border: 1px dashed var(--line); background: none; border-radius: 14px; padding: 12px; text-align: center;
+        color: var(--sub); font-weight: 600; font-size: 14px; cursor: pointer; flex: none; width: 100%; }
+      /* 하단 「보관됨」— 개수 많아도 목록만 스크롤 */
+      #home-archived { flex: 0 1 auto; min-height: 0; max-height: 42%;
+        display: flex; flex-direction: column; overflow: hidden;
+        border-top: 1px solid var(--line); padding-top: 6px; margin-top: 2px; }
+      .archhead { background: none; border: 0; color: var(--sub); font-size: 12px; font-weight: 600;
+        text-align: left; padding: 4px 2px 8px; cursor: pointer; width: 100%; flex: none; }
+      #arch-list { flex: 1 1 0%; min-height: 0; height: 0;
+        display: flex; flex-direction: column; gap: 10px;
+        overflow-x: hidden; overflow-y: scroll;
+        -webkit-overflow-scrolling: touch; overscroll-behavior: contain; touch-action: pan-y;
+        padding: 0 0 calc(12px + env(safe-area-inset-bottom)); }
+
+      /* ---------- 내 취향 ---------- */
+      #screen-prefs { gap: 0; padding: 0; }
+      #screen-prefs .prefs-top {
+        padding: 14px 14px 12px; background:
+          radial-gradient(120% 80% at 0% 0%, rgba(61,107,92,.35), transparent 55%),
+          linear-gradient(180deg, #1a222b 0%, var(--bg) 100%);
+        border-bottom: 1px solid var(--line); flex: none;
+      }
+      #screen-prefs .prefs-top .bar { margin-bottom: 8px; }
+      #screen-prefs .prefs-top h2 { font-size: 20px; letter-spacing: -.02em; }
+      #screen-prefs .prefs-lead { color: var(--sub); font-size: 12.5px; line-height: 1.45; margin: 0 2px 10px; }
+      #prefsMeta { display: flex; gap: 8px; flex-wrap: wrap; }
+      #prefsMeta .chip { background: var(--surface2); color: var(--sub); }
+      #prefsMeta .chip.ban { background: rgba(224,96,85,.14); color: #f0a29c; }
+      #prefsMeta .chip.want { background: rgba(61,107,92,.22); color: #9dcbba; }
+      #prefsBody { flex: 1; overflow-y: auto; padding: 12px 12px calc(18px + env(safe-area-inset-bottom));
+        display: flex; flex-direction: column; gap: 14px; }
+      .pref-sec { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 12px; }
+      .pref-sec-h { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+      .pref-sec-h strong { font-size: 14px; }
+      .pref-sec-h span { color: var(--sub); font-size: 11px; }
+      .pref-sec-d { color: var(--sub); font-size: 12px; margin-bottom: 10px; line-height: 1.4; }
+      .pref-empty { color: var(--pend); font-size: 12.5px; padding: 10px 2px; }
+      .pref-item { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: start;
+        padding: 10px 0; border-top: 1px solid var(--line); }
+      .pref-item:first-of-type { border-top: 0; padding-top: 2px; }
+      .pref-item .pt { font-size: 13.5px; font-weight: 600; line-height: 1.4; }
+      .pref-item .ps { color: var(--sub); font-size: 11.5px; margin-top: 3px; line-height: 1.4; }
+      .pref-item .pmeta { color: var(--pend); font-size: 10.5px; margin-top: 4px; }
+      .pref-x { background: transparent; border: 0; color: var(--err); font-size: 18px; line-height: 1;
+        padding: 2px 6px; cursor: pointer; }
+      .pref-add { display: flex; gap: 8px; margin-top: 8px; }
+      .pref-add input { flex: 1; min-width: 0; background: var(--bg); color: var(--ink);
+        border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 14px; }
+      .pref-add .btn { width: auto; margin-top: 0; padding: 10px 14px; flex: none; }
+      .pref-sec.ban { border-color: rgba(224,96,85,.28); }
+      .pref-sec.want { border-color: rgba(61,107,92,.35); }
+      .pref-sec.note { border-color: rgba(76,141,255,.28); }
+      .pref-pill { display: inline-block; font-size: 10.5px; font-weight: 700; padding: 2px 7px;
+        border-radius: 999px; background: rgba(76,141,255,.16); color: #9bb8f0; margin-right: 6px; }
+      .pref-add.col { flex-direction: column; }
+      .pref-add.col .pref-add-row { display: flex; gap: 8px; }
+
+      /* ---------- 스텝퍼 ---------- */
+      .stepper { display: flex; gap: 4px; padding: 2px 2px 0; flex: none; }
+      .step { flex: 1; text-align: center; font-size: 9px; color: var(--sub); }
+      .step i { display: block; height: 5px; border-radius: 3px; background: var(--surface2); margin-bottom: 4px; }
+      .step.done i { background: var(--done); }
+      .step.done { cursor: pointer; }
+      .step.cur i { background: var(--wait); }
+      .step.cur { color: var(--wait); font-weight: 700; }
+      .step.run-cur i { background: var(--run); }
+      .step.run-cur { color: var(--run); font-weight: 700; }
+      .step.err-cur i { background: var(--err); }
+      .step.err-cur { color: var(--err); font-weight: 700; }
+
+      /* ---------- 컴팩트 진행 헤더(접힘 한 줄) ---------- */
+      .stageline { display: flex; align-items: center; gap: 8px; padding: 6px 8px; max-height: 44px;
+        background: var(--surface); border: 1px solid var(--line); border-radius: 10px; flex: none; cursor: pointer; }
+      .stageline-bar { width: 34px; height: 4px; border-radius: 2px; background: var(--surface2); overflow: hidden; flex: none; }
+      .stageline-bar i { display: block; height: 100%; border-radius: 2px; background: var(--accent); }
+      .stageline-text { font-size: 12px; font-weight: 600; color: var(--sub); overflow: hidden;
+        text-overflow: ellipsis; white-space: nowrap; }
+      .stageline-toggle { color: var(--sub); font-size: 12px; flex: none; }
+      .stageline .btn { width: auto; margin-top: 0; padding: 4px 10px; font-size: 11.5px; flex: none; }
+      .stageline.err .stageline-text { color: var(--err); }
+      .stageline.err .stageline-bar i { background: var(--err); }
+      .stageline.wait .stageline-text { color: var(--wait); }
+      .stageline.wait .stageline-bar i { background: var(--wait); }
+      .stageline.run .stageline-text { color: var(--run); }
+      .stageline.run .stageline-bar i { background: var(--run); }
+      /* 기본은 내용 높이(짧은 단계 카드). 단, 비즈니스 설문처럼 카드가 길어 화면을 넘치면
+         flex-shrink로 남는 영역만큼 줄어들며 내부 스크롤이 생겨 하단이 잘리지 않는다. */
+      #stageWrap { display: flex; flex-direction: column; gap: 10px; flex: 0 1 auto; min-height: 0;
+        overflow-y: auto; overscroll-behavior: contain; }
+
+      /* ---------- 단계 카드 ---------- */
+      .stagecard { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px; flex: none; }
+      .stagecard .h { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 13px; }
+      .stagecard .h .chip { margin-left: auto; }
+      .stagecard .h.err { color: var(--err); }
+      .stagecard .d { color: var(--sub); font-size: 11.5px; margin-top: 4px; white-space: pre-wrap; }
+      .btn { display: block; width: 100%; border-radius: 10px; padding: 10px; text-align: center; font-weight: 700;
+        font-size: 13px; margin-top: 10px; border: 0; cursor: pointer; }
+      .btn.primary { background: var(--wait); color: #1A1206; }
+      .btn.ghost { background: var(--surface2); color: var(--ink); font-weight: 600; }
+      .btn.danger { background: rgba(224,96,85,.15); color: var(--err); font-weight: 600; }
+      .btn:disabled, .btn.disabled { background: var(--surface2); color: var(--pend); cursor: default; }
+      .btnrow { display: flex; gap: 8px; }
+      .btnrow .btn { margin-top: 10px; font-size: 12px; padding: 10px 8px; }
+
+      /* ---------- 채팅 ---------- */
+      .chat { flex: 1; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; padding: 2px; }
+      #screen-project.legacy .chat { flex: 0 0 30%; }
+      /* 말풍선 + 시각 캡션 묶음: me는 오른쪽, ai는 왼쪽 정렬 */
+      .msg { display: flex; flex-direction: column; gap: 2px; max-width: 86%; }
+      .msg.me { align-self: flex-end; align-items: flex-end; }
+      .msg.ai { align-self: flex-start; align-items: flex-start; }
+      .msg .bub { max-width: 100%; }
+      .ts { font-size: 9.5px; color: var(--pend); padding: 0 5px; font-variant-numeric: tabular-nums; }
+      .ts-inline { color: var(--pend); font-variant-numeric: tabular-nums; }
+      .bub { max-width: 86%; padding: 8px 11px; border-radius: 12px; font-size: 12.5px; line-height: 1.5; word-break: break-word; }
+      .bub.ai { background: var(--surface); border: 1px solid var(--line); align-self: flex-start; border-bottom-left-radius: 4px; }
+      .bub.ai code { background: var(--surface2); border-radius: 4px; padding: 1px 4px; font-size: 11.5px; }
+      .bub.ai pre { background: var(--surface2); border-radius: 8px; padding: 8px; overflow-x: auto; }
+      .bub.me { background: var(--accent); color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
+      .logline { font-family: ui-monospace, Menlo, monospace; font-size: 10.5px; color: var(--sub); align-self: stretch;
+        padding: 0 4px; line-height: 1.6; word-break: break-word; }
+
+      /* ---------- 비즈니스 모델 설문 폼 ---------- */
+      .bizform { display: flex; flex-direction: column; gap: 14px; margin: 10px 0 12px; }
+      .bq { display: flex; flex-direction: column; gap: 6px; }
+      .bqlabel { font-size: 11px; color: var(--sub); letter-spacing: .02em; text-transform: uppercase;
+        font-family: ui-monospace, Menlo, monospace; }
+      .bopt { display: flex; align-items: center; gap: 9px; padding: 10px 12px; border-radius: 10px;
+        border: 1px solid var(--line); background: var(--surface); cursor: pointer; font-size: 13px; }
+      .bopt .bradio { flex: 0 0 auto; width: 16px; height: 16px; border-radius: 50%;
+        border: 1.5px solid var(--pend); position: relative; }
+      .bopt.sel { border-color: var(--accent); background: var(--surface2); }
+      .bopt.sel .bradio { border-color: var(--accent); }
+      .bopt.sel .bradio::after { content: ""; position: absolute; inset: 3px; border-radius: 50%; background: var(--accent); }
+      .bopt.warn { border-color: color-mix(in srgb, var(--wait) 45%, var(--line)); }
+      .bopt.sel.warn { border-color: var(--wait); }
+      .bopt .btxt { flex: 1; }
+      .bopt .bflag { font-family: ui-monospace, Menlo, monospace; font-size: 10px; color: var(--wait); white-space: nowrap; }
+
+      /* ---------- 실행 중 대기 큐 미리보기 ---------- */
+      .qhead { margin-top: 8px; font-size: 11px; color: var(--wait); font-weight: 600; }
+      .qline { font-size: 11.5px; color: var(--sub); padding: 3px 0 0 2px; overflow: hidden;
+        text-overflow: ellipsis; white-space: nowrap; }
+
+      /* ---------- 보조 스킬 시트 ---------- */
+      #skillsSheet { position: fixed; inset: 0; z-index: 30; display: flex; align-items: flex-end; }
+      #skillsBackdrop { position: absolute; inset: 0; background: rgba(0,0,0,.5); }
+      #skillsList { max-height: 55vh; overflow-y: auto; display: flex; flex-direction: column;
+        gap: 8px; margin-bottom: 10px; }
+      .skillrow { border: 1px solid var(--line); background: var(--surface2); border-radius: 10px;
+        padding: 10px 12px; cursor: pointer; }
+      .sklabel { font-weight: 700; font-size: 13px; }
+      .skdesc { color: var(--sub); font-size: 11.5px; margin-top: 2px; }
+
+      /* ---------- 새 프로젝트 선택 시트 ---------- */
+      #newProjectSheet { position: fixed; inset: 0; z-index: 32; display: flex; align-items: flex-end; }
+      #newProjectBackdrop { position: absolute; inset: 0; background: rgba(0,0,0,.5); }
+      .mode-row { display: flex; flex-direction: column; align-items: flex-start; gap: 3px;
+        width: 100%; text-align: left; background: var(--surface2); border: 1px solid var(--line);
+        border-radius: 12px; padding: 14px 14px; margin-bottom: 8px; cursor: pointer; color: var(--ink); }
+      .mode-row strong { font-size: 14px; }
+      .mode-row span { color: var(--sub); font-size: 12px; line-height: 1.4; }
+      #templateProjectPanel { margin-top: 4px; }
+      #templateProjectName, #directIdeaInput { width: 100%; box-sizing: border-box; background: var(--surface2);
+        color: var(--ink); border: 1px solid var(--line); border-radius: 10px;
+        padding: 11px 12px; font-size: 14px; margin-bottom: 10px; }
+      #directIdeaInput { resize: vertical; min-height: 84px; font-family: inherit; }
+      #newProjectTemplates { max-height: 42vh; overflow-y: auto; }
+
+      /* ---------- 아이디어 보관함 / 연구소 후보 리스트 ---------- */
+      #ideaPicker {
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        width: 100%; height: 100%; max-height: 100dvh;
+        z-index: 35; background: var(--bg);
+        display: flex; flex-direction: column; overflow: hidden;
+        padding-top: env(safe-area-inset-top);
+      }
+      .idea-head { flex: 0 0 auto; display: flex; flex-direction: column; gap: 2px;
+        padding: 12px 14px 10px; border-bottom: 1px solid var(--line); }
+      .idea-head .idea-head-row { display: flex; align-items: center; gap: 8px; }
+      .idea-head h2 { font-size: 17px; margin: 0; }
+      .idea-head p { color: var(--sub); font-size: 12px; margin: 2px 0 0 34px; }
+      /* flex 1 1 0% + height:0 → 내용이 늘어도 화면 안에서만 세로 스크롤 */
+      #ideaPickerList {
+        flex: 1 1 0%; min-height: 0; height: 0;
+        overflow-x: hidden; overflow-y: scroll;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+        touch-action: pan-y;
+        padding: 0 0 calc(24px + env(safe-area-inset-bottom));
+      }
+      .idea-empty { color: var(--sub); font-size: 13px; padding: 28px 18px; text-align: center; line-height: 1.5; white-space: pre-wrap; }
+      .idea-row { border-bottom: 1px solid var(--line); background: var(--bg); flex: none; }
+      .idea-summary { display: grid; grid-template-columns: 28px 1fr 20px; gap: 8px; align-items: start;
+        padding: 14px 14px; cursor: pointer; }
+      .idea-summary:active { background: rgba(255,255,255,.03); }
+      .idea-num { color: var(--wait); font-weight: 800; font-size: 13px; padding-top: 1px; }
+      .idea-main { min-width: 0; }
+      .idea-meta { color: var(--sub); font-size: 11px; letter-spacing: .01em; }
+      .idea-title { font-size: 14px; line-height: 1.45; margin-top: 4px; font-weight: 600; }
+      .idea-ref { color: var(--wait); font-size: 11px; margin-top: 4px; line-height: 1.35; }
+      .idea-ref-block { margin-top: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px;
+        background: rgba(255,255,255,.03); }
+      .idea-ref-line { font-size: 12px; font-weight: 650; color: var(--wait); }
+      .idea-ref-sub { font-size: 11.5px; color: var(--sub); margin-top: 4px; line-height: 1.45; }
+      .idea-chevron { color: var(--sub); transition: transform .15s ease; padding-top: 2px; }
+      .idea-row.open .idea-chevron { transform: rotate(90deg); }
+      .idea-detail { display: none; padding: 0 14px 14px 50px; }
+      .idea-row.open .idea-detail { display: block; }
+      .idea-detail-body { color: var(--ink); font-size: 12.5px; line-height: 1.55; white-space: pre-wrap;
+        background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+      .idea-name { width: 100%; margin-top: 10px; background: var(--surface); color: var(--ink);
+        border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 14px; }
+      .idea-actions { display: flex; gap: 8px; margin-top: 10px; }
+      .idea-actions .btn { margin-top: 0; flex: 1; width: auto; display: inline-block; }
+      /* 대화 ↔ 후보 리스트 토글 (대화 위에 끼워 넣지 않고 화면 전환) */
+      #ideaViewToggle { display: none; flex: none; gap: 4px; padding: 3px;
+        background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+      #ideaViewToggle.on { display: flex; }
+      #ideaViewToggle button { flex: 1; border: 0; border-radius: 10px; padding: 8px 10px;
+        background: transparent; color: var(--sub); font-size: 13px; font-weight: 700; cursor: pointer; }
+      #ideaViewToggle button.on { background: var(--surface2); color: var(--ink); }
+      #ideaViewToggle .idea-tab-count { display: inline-block; min-width: 1.4em; margin-left: 4px;
+        padding: 1px 6px; border-radius: 999px; background: rgba(76,141,255,.18); color: #9bb8f0;
+        font-size: 11px; font-weight: 800; }
+      #ideaProposed { display: none; flex: 1 1 0%; min-height: 0; overflow: hidden; flex-direction: column;
+        border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+      #screen-project.ideas-mode #ideaProposed { display: flex; }
+      #screen-project.ideas-mode #chatList,
+      #screen-project.ideas-mode #attachmentTray,
+      #screen-project.ideas-mode .inputrow,
+      #screen-project.ideas-mode #pipePreview,
+      #screen-project.ideas-mode #frameWrap,
+      #screen-project.ideas-mode #stageWrap { display: none !important; }
+      .idea-proposed-head { flex: 0 0 auto; padding: 12px 14px 8px; font-size: 12px; font-weight: 700; color: var(--sub); line-height: 1.4; }
+      #ideaProposedList {
+        flex: 1 1 0%; min-height: 0; height: 0;
+        overflow-x: hidden; overflow-y: scroll;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+        touch-action: pan-y;
+        padding: 0 0 calc(24px + env(safe-area-inset-bottom));
+      }
+      #ideaProposed .idea-row { border-bottom: 1px solid var(--line); flex: none; }
+      #ideaProposed .idea-row:last-child { border-bottom: 0; }
+      .idea-kept { color: var(--done); font-size: 11px; font-weight: 700; margin-top: 4px; }
+
+      /* ---------- 입력줄 ---------- */
+      .inputrow { display: flex; gap: 8px; flex: none; align-items: flex-end; }
+      /* 긴 문장은 가로 스크롤 대신 아래로 늘어난다(자동 높이 — app.js가 관리, 최대 5줄) */
+      #cmd { flex: 1; min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 20px;
+        padding: 9px 14px; color: var(--ink); font-size: 16px; /* iOS 포커스 확대 방지 */
+        font-family: inherit; line-height: 1.45; resize: none; overflow-y: hidden; max-height: 128px; }
+      .inputrow button { border: 0; border-radius: 999px; padding: 9px 16px; background: var(--accent); color: #fff;
+        font-weight: 700; font-size: 13px; cursor: pointer; flex: none; }
+      .inputrow #skillsBtn { background: var(--surface2); color: var(--ink); padding: 9px 12px; }
+      .inputrow #attachBtn { background: var(--surface2); color: var(--ink); padding: 9px 12px; font-size: 17px; }
+      #attachmentTray { display: flex; gap: 8px; overflow-x: auto; flex: none; padding: 2px; }
+      .attachment { position: relative; width: 58px; height: 58px; flex: 0 0 58px; border-radius: 10px;
+        overflow: hidden; border: 1px solid var(--line); background: var(--surface); }
+      .attachment img { width: 100%; height: 100%; object-fit: cover; display: block; }
+      .attachment button { position: absolute; top: 2px; right: 2px; width: 20px; height: 20px; border: 0;
+        border-radius: 50%; background: rgba(0,0,0,.75); color: #fff; font-size: 13px; line-height: 20px;
+        padding: 0; cursor: pointer; }
+
+      /* ---------- 단계 카드: 산출물 열기 버튼 ---------- */
+      .artifacts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+      .artifacts .btn { width: auto; flex: 1 1 auto; margin-top: 0; }
+
+      /* ---------- 산출물 뷰어 오버레이 ---------- */
+      #viewer { position: fixed; inset: 0; background: var(--bg); z-index: 20; display: flex; flex-direction: column; padding: 12px; gap: 10px; }
+      .viewer-bar { display: flex; align-items: center; gap: 8px; flex: none; }
+      .viewer-bar .t { font-weight: 700; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .vchips { display: flex; gap: 8px; flex: none; }
+      .vchip { border: 1px solid var(--line); background: var(--surface2); color: var(--sub); border-radius: 999px;
+        padding: 6px 12px; font-size: 12px; font-weight: 700; cursor: pointer; }
+      .vchip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+      .viewer-md { flex: 1; overflow-y: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+        padding: 14px; font-size: 13px; line-height: 1.7; }
+      .viewer-md h1, .viewer-md h2, .viewer-md h3 { margin: 12px 0 6px; }
+      .viewer-md p { margin: 6px 0; }
+      .viewer-md code { background: var(--surface2); border-radius: 4px; padding: 1px 4px; font-size: 12px; }
+      .viewer-md table { border-collapse: collapse; width: 100%; margin: 8px 0; }
+      .viewer-md th, .viewer-md td { border: 1px solid var(--line); padding: 6px 8px; font-size: 12px; text-align: left; }
+      textarea.viewer-md { width: 100%; resize: none; color: var(--ink); font-family: inherit; }
+      .viewer-bar .btn { width: auto; margin-top: 0; padding: 6px 10px; font-size: 12px; flex: none; }
+      .viewer-frame-wrap { flex: 1; min-height: 0; border: 1px solid var(--line); border-radius: 12px; background: #000;
+        overflow: hidden; position: relative; }
+      #viewerFrame { border: 0; background: #fff; box-shadow: 0 0 0 1px #333; }
+
+      /* ---------- 홈: 카드 관리(⋯) 버튼 ---------- */
+      .morebtn { background: none; border: 0; color: var(--sub); font-size: 18px; line-height: 1;
+        padding: 2px 6px; cursor: pointer; flex: none; }
+
+      /* ---------- 관리 시트: 보관/복원·삭제 ---------- */
+      #manageSheet { position: fixed; inset: 0; z-index: 30; display: flex; align-items: flex-end; }
+      #manageBackdrop { position: absolute; inset: 0; background: rgba(0,0,0,.5); }
+      .sheet { position: relative; width: 100%; background: var(--surface); border: 1px solid var(--line);
+        border-radius: 16px 16px 0 0; padding: 14px 14px calc(14px + env(safe-area-inset-bottom)); }
+      .sheet-title { font-weight: 700; font-size: 14px; margin-bottom: 10px; overflow: hidden;
+        text-overflow: ellipsis; white-space: nowrap; }
+      .sheet-notice { color: var(--err); font-size: 12px; margin-bottom: 10px; }
+
+      /* ---------- 공용: 행/여백/헤더 바 ---------- */
+      .row { display: flex; align-items: center; gap: 8px; }
+      .spacer { flex: 1; }
+      .hint { color: var(--sub); font-size: 12px; flex: none; }
+      .bar { display: flex; align-items: center; gap: 8px; flex: none; }
+      .bar h2 { font-size: 15px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .btnrow { flex: none; }
+
+      /* ---------- 파이프라인 템플릿 화면 ---------- */
+      #tplList { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+      .tpl-section-title { font-size: 12px; font-weight: 700; color: var(--sub); margin-top: 6px; }
+      #screen-templates .tplcard { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px; flex: none; }
+
+      /* ---------- 스텝 편집 화면 ---------- */
+      #tplSteps { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+      #screen-tpl-edit .steprow { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px; flex: none; }
+      #screen-tpl-edit .steprow.off { opacity: .5; }
+      #screen-tpl-edit .steprow .btn { width: auto; margin-top: 0; padding: 6px 10px; }
+      #tplAddStep { flex: none; }
+
+      /* ---------- 프롬프트 편집 오버레이 ---------- */
+      #promptEditor { position: fixed; inset: 0; background: var(--bg); z-index: 40; display: flex; flex-direction: column; padding: 12px; gap: 10px; }
+      #promptBody { flex: 1; width: 100%; font: 13px/1.5 ui-monospace, monospace; background: var(--surface); color: var(--ink);
+        border: 1px solid var(--line); border-radius: 10px; padding: 10px; resize: none; }
+      #promptEditor .btnrow .btn { margin-top: 0; }
+
+      /* ---------- 레거시 미리보기 ---------- */
+      #frameWrap { flex: 1; min-height: 0; border: 1px solid var(--line); border-radius: 12px; background: #000; overflow: hidden; position: relative; }
+      #frame { border: 0; background: #fff; box-shadow: 0 0 0 1px #333; }
+
+      /* ---------- 파이프라인 미리보기 열기 (버튼만 상시 표시, iframe은 뷰어로) ---------- */
+      #pipePreview { flex: none; }
+      #pipePreviewOpen { width: 100%; margin-top: 0; }
+
+      /* ---------- 페어링 ---------- */
+      #screen-pair { justify-content: center; gap: 12px; padding: 24px; }
+      #screen-pair h3 { font-size: 18px; text-align: center; margin-bottom: 8px; }
+      #pair { display: flex; flex-direction: column; gap: 8px; }
+      #pair input { background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 10px; padding: 11px 12px; font-size: 16px; }
+      #pair button { background: var(--accent); color: #fff; border: 0; border-radius: 10px; padding: 11px; font-size: 15px; font-weight: 700; cursor: pointer; }
+      #pair button:disabled { background: var(--surface2); color: var(--pend); }
+      #pairStatus { font-size: 13px; min-height: 18px; padding: 8px 10px; border-radius: 10px; }
+
+      /* ---------- 토스트 ---------- */
+      #toast { position: fixed; left: 12px; right: 12px; bottom: 16px; background: #4a1313; color: #f88;
+        padding: 10px 12px; border-radius: 10px; font-size: 12.5px; z-index: 40; }
+    </style>
+  </head>
+  <body>
+    <!-- ① 로그인 -->
+    <div id="screen-pair" class="screen">
+      <h3>📱 connect-pc-mobile-claude</h3>
+      <div id="pair">
+        <input id="loginId" placeholder="아이디" autocapitalize="none" autocomplete="username" />
+        <input id="pw" type="password" placeholder="비밀번호" autocomplete="current-password" />
+        <button id="connect">로그인</button>
+      </div>
+      <div id="pairStatus" hidden></div>
+    </div>
+
+    <!-- ② 홈: 프로젝트 카드 목록 -->
+    <div id="screen-home" class="screen" hidden>
+      <div class="appbar">
+        <span class="t">내 프로젝트</span>
+        <span class="spacer"></span>
+        <span class="dot-live"></span>
+        <span class="conn">PC 연결됨</span>
+      </div>
+      <div id="home-list"></div>
+      <button id="newProject" class="newbtn">＋ 새 프로젝트</button>
+      <div class="btnrow">
+        <button id="openIdeaVault" class="btn ghost">📚 아이디어 보관함</button>
+        <button id="openPrefs" class="btn ghost">🧭 내 취향</button>
+      </div>
+      <div class="btnrow">
+        <button id="openSettings" class="btn ghost">⚙️ 설정</button>
+        <button id="openTemplates" class="btn ghost">⚙️ 템플릿</button>
+      </div>
+      <div id="home-archived" hidden>
+        <button id="archToggle" class="archhead">보관됨 ▾</button>
+        <div id="arch-list" hidden></div>
+      </div>
+    </div>
+
+    <!-- ③ 프로젝트: 파이프라인(스텝퍼+단계카드+채팅) / 레거시(채팅+iframe) -->
+    <div id="screen-project" class="screen" hidden>
+      <div class="appbar">
+        <button id="back" class="back" title="뒤로">‹</button>
+        <span id="projName" class="t"></span>
+        <span class="spacer"></span>
+        <span id="projBadge" class="chip pend"></span>
+      </div>
+      <div id="stageLine" class="stageline" hidden>
+        <div class="stageline-bar"><i id="stageLineBar"></i></div>
+        <span id="stageLineText" class="stageline-text"></span>
+        <span class="spacer"></span>
+        <button id="stageLineConfirm" class="btn primary" hidden>✓ 컨펌</button>
+        <span id="stageLineToggle" class="stageline-toggle">▾</span>
+      </div>
+      <div id="stageWrap" hidden>
+        <div id="stepper" class="stepper" hidden></div>
+        <div id="stageCard" class="stagecard" hidden></div>
+      </div>
+      <div id="ideaViewToggle" role="tablist" aria-label="대화와 후보 전환">
+        <button type="button" id="ideaTabChat" class="on" role="tab" aria-selected="true">대화</button>
+        <button type="button" id="ideaTabList" role="tab" aria-selected="false">후보<span class="idea-tab-count" id="ideaTabCount" hidden>0</span></button>
+      </div>
+      <div id="ideaProposed" hidden>
+        <div class="idea-proposed-head">이번 후보 · 눌러서 상세 · 맘에 드는 것만 보관</div>
+        <div id="ideaProposedList"></div>
+      </div>
+      <div id="chatList" class="chat"></div>
+      <div id="frameWrap" hidden><iframe id="frame" title="미리보기"></iframe></div>
+      <div id="pipePreview" hidden>
+        <button id="pipePreviewOpen" class="btn primary" type="button">🌐 미리보기 열기</button>
+      </div>
+      <div id="attachmentTray" hidden></div>
+      <div class="inputrow">
+        <button id="skillsBtn" title="스킬 적용">🧩</button>
+        <button id="attachBtn" title="이미지 첨부">📎</button>
+        <input id="imageInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif" multiple hidden />
+        <textarea id="cmd" placeholder="메시지…" rows="1" autocomplete="off" enterkeyhint="send"></textarea>
+        <button id="send">보내기</button>
+      </div>
+    </div>
+
+    <!-- ④ 산출물 뷰어 오버레이(md/iframe 공용) -->
+    <div id="viewer" hidden>
+      <div class="viewer-bar">
+        <button id="viewerClose" class="back" title="닫기">‹</button>
+        <span id="viewerTitle" class="t"></span>
+        <span class="spacer"></span>
+        <button id="viewerEditBtn" class="btn ghost" hidden>✏️ 직접 수정</button>
+      </div>
+      <div id="viewerChips" class="vchips" hidden></div>
+      <div id="viewerMd" class="viewer-md" hidden></div>
+      <textarea id="viewerEditArea" class="viewer-md" hidden spellcheck="false"></textarea>
+      <div id="viewerEditBtns" class="btnrow" hidden>
+        <button id="viewerEditSave" class="btn primary">저장</button>
+        <button id="viewerEditCancel" class="btn ghost">취소</button>
+      </div>
+      <div id="viewerFrameWrap" class="viewer-frame-wrap" hidden><iframe id="viewerFrame" title="산출물 미리보기"></iframe></div>
+    </div>
+
+    <!-- ⑤ 관리 시트: 보관/복원·삭제 -->
+    <div id="manageSheet" hidden>
+      <div id="manageBackdrop"></div>
+      <div class="sheet">
+        <div id="manageTitle" class="sheet-title"></div>
+        <div id="manageRunNotice" class="sheet-notice" hidden>실행 중에는 보관/삭제할 수 없어요 — 먼저 중단하세요</div>
+        <button id="manageArchive" class="btn ghost">📦 보관</button>
+        <button id="manageDelete" class="btn danger">🗑 삭제</button>
+        <button id="manageCancel" class="btn ghost">취소</button>
+      </div>
+    </div>
+
+    <!-- ⑥ 파이프라인 템플릿(곁가지) 화면 -->
+    <section id="screen-templates" class="screen" hidden>
+      <header class="bar">
+        <button id="tplBack" class="back">‹</button>
+        <h2>파이프라인 템플릿</h2>
+      </header>
+      <p class="hint">기본 템플릿의 프롬프트를 고치거나, 빈 템플릿을 처음부터 자유롭게 만들 수 있어요.
+        변경은 이후 만드는 프로젝트부터 적용돼요.</p>
+      <button id="tplCreate" class="btn primary" type="button">＋ 새 빈 템플릿</button>
+      <div id="tplList"></div>
+    </section>
+
+    <!-- ⑥-b 전역 설정 화면: CLI와 모델 선택 -->
+    <section id="screen-settings" class="screen" hidden>
+      <header class="bar">
+        <button id="setBack" class="back">‹</button>
+        <h2>설정</h2>
+      </header>
+      <p class="hint">설치·로그인한 Claude Code 또는 Codex CLI를 고르면 이후 작업부터 적용돼요.</p>
+      <div class="bq">
+        <div class="bqlabel">실행 CLI</div>
+        <div id="providerOpts" class="bizform"></div>
+      </div>
+      <div class="bq">
+        <div class="bqlabel">모델</div>
+        <div id="modelOpts" class="bizform"></div>
+      </div>
+    </section>
+
+    <!-- ⑥-c 내 취향: 피드백으로 쌓인 금지/선호을 보고 직접 수정 -->
+    <section id="screen-prefs" class="screen" hidden>
+      <div class="prefs-top">
+        <header class="bar">
+          <button id="prefsBack" class="back">‹</button>
+          <h2>내 취향</h2>
+        </header>
+        <p class="prefs-lead">피드백은 모두 여기 모아요. 각 항목에 어느 프로젝트에서 나온 말인지 표시됩니다. 다른 앱엔 참고만 하고, 직접 고칠 수 있어요.</p>
+        <div id="prefsMeta"></div>
+      </div>
+      <div id="prefsBody"></div>
+    </section>
+
+    <!-- ⑦ 스텝 편집 화면 -->
+    <section id="screen-tpl-edit" class="screen" hidden>
+      <header class="bar">
+        <button id="tplEditBack" class="back">‹</button>
+        <h2 id="tplEditTitle"></h2>
+      </header>
+      <div id="tplSteps"></div>
+      <button id="tplAddStep" class="btn primary">＋ 스텝 추가</button>
+    </section>
+
+    <!-- ⑧ 프롬프트 편집 오버레이 -->
+    <div id="promptEditor" hidden>
+      <header class="bar">
+        <button id="promptClose" class="back">‹</button>
+        <h2 id="promptTitle"></h2>
+      </header>
+      <textarea id="promptBody" spellcheck="false"></textarea>
+      <div class="btnrow">
+        <button id="promptSave" class="btn primary">저장</button>
+        <button id="promptReset" class="btn ghost" hidden>기본값 복원</button>
+      </div>
+    </div>
+
+    <!-- ⑨ 보조 스킬 시트: 프로젝트에 적용할 수 있는 기능을 골라 채팅으로 요청 -->
+    <div id="skillsSheet" hidden>
+      <div id="skillsBackdrop"></div>
+      <div class="sheet">
+        <div class="sheet-title">🧩 스킬 적용 — 골라서 채팅으로 요청</div>
+        <div id="skillsList"></div>
+        <button id="skillsCancel" class="btn ghost">닫기</button>
+      </div>
+    </div>
+
+    <!-- ⑩ 새 프로젝트 선택 시트 -->
+    <div id="newProjectSheet" hidden>
+      <div id="newProjectBackdrop"></div>
+      <div class="sheet">
+        <div class="sheet-title">무엇을 할까요?</div>
+        <button id="modeIdeaLab" class="mode-row" type="button">
+          <strong>💡 아이디어 연구소</strong>
+          <span>후보를 토론하고 공용 보관함에 저장해요</span>
+        </button>
+        <button id="modeDirectDevelop" class="mode-row" type="button">
+          <strong>🚀 떠오른 아이디어로 바로 개발</strong>
+          <span>보관함에 저장하지 않아도 지금 적고 기능 논의를 시작해요</span>
+        </button>
+        <button id="modeDevelop" class="mode-row" type="button">
+          <strong>🛠 저장된 아이디어로 개발</strong>
+          <span>목록에서 골라 앱 프로젝트를 만들어요</span>
+        </button>
+        <button id="modeTemplate" class="mode-row" type="button">
+          <strong>📋 내 복제 템플릿</strong>
+          <span>직접 복제·편집한 작업 순서로 새 프로젝트를 만들어요</span>
+        </button>
+        <div id="templateProjectPanel" hidden>
+          <input id="templateProjectName" type="text" maxlength="40"
+            placeholder="프로젝트 이름 (예: my-app)" autocomplete="off" />
+          <textarea id="directIdeaInput" rows="4"
+            placeholder="문득 떠오른 아이디어를 적어주세요. 예: 영수증을 찍으면 소비 습관을 재미있게 분석해주는 앱"></textarea>
+          <div id="newProjectTemplates"></div>
+          <button id="templateProjectBack" class="btn ghost" type="button">‹ 다른 방식 선택</button>
+        </div>
+        <button id="newProjectCancel" class="btn ghost">취소</button>
+      </div>
+    </div>
+
+    <!-- ⑪ 아이디어 보관함: 미사용(아직 개발 안 한) 후보만 -->
+    <section id="ideaPicker" hidden>
+      <header class="idea-head">
+        <div class="idea-head-row">
+          <button id="ideaPickerClose" class="back" title="닫기">‹</button>
+          <h2>아이디어 보관함</h2>
+        </div>
+        <p>아직 개발하지 않은 아이디어만 있어요. 개발을 시작하면 여기서 빠집니다.</p>
+      </header>
+      <div id="ideaPickerList"></div>
+    </section>
+
+    <div id="toast" hidden></div>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>

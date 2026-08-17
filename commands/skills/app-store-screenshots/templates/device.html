@@ -1,0 +1,104 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<style>
+  {{FONT_FACE}}
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; }
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: linear-gradient(160deg, {{BG1}} 0%, {{BG2}} 100%);
+    font-family: {{FONT_FAMILY}}, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+    overflow: hidden;
+  }
+  .caption { width: 86%; text-align: center; padding-top: 6.5vh; }
+  .headline { color: {{INK}}; font-weight: 800; font-size: 4.4vh; line-height: 1.22; letter-spacing: -0.01em; }
+  .sub { color: {{SUB}}; font-weight: 500; font-size: 2.4vh; line-height: 1.4; margin-top: 1.5vh; }
+  .stage { flex: 1; width: 100%; display: flex; align-items: center; justify-content: center; padding: 4vh 0 6vh; }
+
+  /* ---- Device body ---- */
+  .device {
+    position: relative;
+    width: 74%;                       /* iPhone default */
+    background: linear-gradient(145deg, #4a4a4d 0%, #2a2a2c 40%, #1a1a1c 100%);
+    border-radius: 13% / 6.2%;
+    padding: 1.7%;
+    box-shadow: 0 4vh 9vh rgba(0,0,0,0.22), inset 0 0 0 0.3vh rgba(255,255,255,0.06);
+  }
+  .screen {
+    position: relative;
+    background: #000;
+    border-radius: 10.5% / 5%;
+    overflow: hidden;
+  }
+  .screen img { width: 100%; display: block; }
+
+  /* Dynamic Island (iPhone) */
+  .island {
+    position: absolute;
+    top: 1.4%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 30%;
+    height: 3.2%;
+    background: #000;
+    border-radius: 999px;
+    z-index: 2;
+  }
+  /* Side buttons */
+  .btn { position: absolute; background: #2a2a2c; border-radius: 2px; }
+  .btn.power { right: -0.6%; top: 26%; width: 0.7%; height: 9%; }
+  .btn.volup { left: -0.6%; top: 22%; width: 0.7%; height: 6%; }
+  .btn.voldn { left: -0.6%; top: 31%; width: 0.7%; height: 6%; }
+  /* iPad front camera */
+  .cam { display: none; }
+
+  /* ---- iPad variant: uniform thicker bezel, square-ish corners, camera dot ---- */
+  body.ipad .device { width: 80%; border-radius: 5.5% / 4%; padding: 2.7%; }
+  body.ipad .screen { border-radius: 3.4% / 2.6%; }
+  body.ipad .island { display: none; }
+  body.ipad .btn { display: none; }
+  body.ipad .cam {
+    display: block; position: absolute; top: 1.2%; left: 50%; transform: translateX(-50%);
+    width: 1%; aspect-ratio: 1; background: #0c0c0e; border-radius: 999px;
+    box-shadow: 0 0 0 0.25vh rgba(255,255,255,0.08); z-index: 2;
+  }
+
+  /* ---- Android (Pixel) variant: thin uniform bezel, centered punch-hole camera ---- */
+  /* Narrower width so a tall (e.g. 1080×2400) capture still fits under the caption. */
+  .hole { display: none; }
+  body.android .device { width: 62%; border-radius: 9% / 4.2%; padding: 1.5%; }
+  body.android .screen { border-radius: 8% / 3.8%; }
+  body.android .island { display: none; }
+  body.android .btn.volup, body.android .btn.voldn { display: none; }
+  body.android .btn.power { right: -0.6%; top: 20%; height: 7%; }
+  body.android .hole {
+    display: block; position: absolute; top: 1.1%; left: 50%; transform: translateX(-50%);
+    width: 2.6%; aspect-ratio: 1; background: #0a0a0c; border-radius: 999px; z-index: 2;
+    box-shadow: 0 0 0 0.2vh rgba(255,255,255,0.10);
+  }
+</style>
+</head>
+<body class="{{DEVICE}}">
+  <div class="caption">
+    <div class="headline">{{HEADLINE}}</div>
+    <div class="sub">{{SUBTEXT}}</div>
+  </div>
+  <div class="stage">
+    <div class="device">
+      <span class="btn power"></span>
+      <span class="btn volup"></span>
+      <span class="btn voldn"></span>
+      <div class="cam"></div>
+      <div class="screen">
+        <div class="island"></div>
+        <div class="hole"></div>
+        <img src="{{SCREENSHOT}}" />
+      </div>
+    </div>
+  </div>
+</body>
+</html>

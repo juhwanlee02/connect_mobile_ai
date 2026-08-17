@@ -1,0 +1,329 @@
+<title>앱 팩토리 — 멀티 프로젝트 UI/UX 목업</title>
+<style>
+  :root{
+    --page-bg:#F3F2EE; --page-ink:#23272B; --page-sub:#6B7075; --page-line:#DDDBD4;
+    --card:#FFFFFF;
+    --accent:#3D6B5C; /* 딥 그린 — 파이프라인 브랜드 */
+    --phone-bg:#12161B; --phone-surface:#1B2129; --phone-surface2:#232B35;
+    --phone-ink:#E8ECEF; --phone-sub:#8B94A0; --phone-line:#2C3540;
+    --run:#4C8DFF; --wait:#E5A83B; --done:#4CAF80; --err:#E06055; --pend:#5A6572;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --page-bg:#15181B; --page-ink:#E6E4DF; --page-sub:#9A9FA5; --page-line:#2C3136; --card:#1D2126; --accent:#6FAE9B; }
+  }
+  :root[data-theme="dark"]{ --page-bg:#15181B; --page-ink:#E6E4DF; --page-sub:#9A9FA5; --page-line:#2C3136; --card:#1D2126; --accent:#6FAE9B; }
+  :root[data-theme="light"]{ --page-bg:#F3F2EE; --page-ink:#23272B; --page-sub:#6B7075; --page-line:#DDDBD4; --card:#FFFFFF; --accent:#3D6B5C; }
+
+  *{box-sizing:border-box; margin:0}
+  body{background:var(--page-bg); color:var(--page-ink);
+    font-family:"Apple SD Gothic Neo","Pretendard","Noto Sans KR",system-ui,sans-serif;
+    line-height:1.6; padding:48px 24px 80px}
+  .wrap{max-width:1180px; margin:0 auto}
+  .eyebrow{font-size:12px; letter-spacing:.14em; color:var(--accent); font-weight:700; text-transform:uppercase}
+  h1{font-size:clamp(24px,3.4vw,34px); line-height:1.25; text-wrap:balance; margin:8px 0 10px; font-weight:800}
+  .lede{color:var(--page-sub); max-width:62ch; margin-bottom:14px}
+  .policy{display:flex; flex-wrap:wrap; gap:10px; margin:18px 0 40px}
+  .policy span{background:var(--card); border:1px solid var(--page-line); border-radius:999px; padding:7px 14px; font-size:13px}
+  .policy b{color:var(--accent)}
+
+  .stage{display:flex; flex-wrap:wrap; gap:36px; justify-content:center; align-items:flex-start}
+  .unit{width:320px}
+  .unit h2{font-size:15px; font-weight:700; margin:0 0 4px}
+  .unit .cap{font-size:13px; color:var(--page-sub); margin-bottom:14px; min-height:3.2em}
+
+  /* ---------- phone frame ---------- */
+  .phone{width:320px; height:640px; background:var(--phone-bg); border-radius:36px;
+    border:1px solid var(--page-line); box-shadow:0 24px 48px -24px rgba(0,0,0,.45);
+    padding:14px 12px 12px; color:var(--phone-ink); display:flex; flex-direction:column; overflow:hidden; position:relative}
+  .notch{width:110px; height:22px; background:#000; border-radius:12px; margin:0 auto 10px; flex:none}
+  .screen{flex:1; display:flex; flex-direction:column; gap:10px; overflow:hidden; font-size:13px}
+
+  .appbar{display:flex; align-items:center; gap:8px; padding:2px 4px}
+  .appbar .t{font-weight:700; font-size:15px}
+  .appbar .back{color:var(--phone-sub)}
+  .appbar .spacer{flex:1}
+  .dot-live{width:8px; height:8px; border-radius:50%; background:var(--done)}
+  .appbar .conn{font-size:11px; color:var(--phone-sub)}
+
+  .pcard{background:var(--phone-surface); border:1px solid var(--phone-line); border-radius:14px; padding:12px}
+  .pcard .row{display:flex; align-items:center; gap:8px}
+  .pcard .name{font-weight:700; font-size:14px}
+  .pcard .meta{color:var(--phone-sub); font-size:11px; margin-top:6px; display:flex; gap:10px}
+  .pcard.attn{border-color:var(--wait); box-shadow:0 0 0 1px var(--wait) inset}
+
+  .chip{font-size:10px; font-weight:700; padding:3px 8px; border-radius:999px; flex:none; letter-spacing:.02em}
+  .chip.run{background:rgba(76,141,255,.16); color:var(--run)}
+  .chip.wait{background:rgba(229,168,59,.18); color:var(--wait)}
+  .chip.done{background:rgba(76,175,128,.16); color:var(--done)}
+  .chip.pend{background:rgba(90,101,114,.3); color:var(--phone-sub)}
+  .chip.q{background:var(--phone-surface2); color:var(--phone-sub); font-weight:600}
+
+  .minibar{height:4px; border-radius:2px; background:var(--phone-surface2); margin-top:10px; overflow:hidden}
+  .minibar i{display:block; height:100%; border-radius:2px; background:var(--accent)}
+
+  .newbtn{border:1px dashed var(--phone-line); border-radius:14px; padding:12px; text-align:center; color:var(--phone-sub); font-weight:600}
+
+  /* stepper */
+  .stepper{display:flex; gap:4px; padding:2px 2px 0}
+  .step{flex:1; text-align:center; font-size:9px; color:var(--phone-sub)}
+  .step i{display:block; height:5px; border-radius:3px; background:var(--phone-surface2); margin-bottom:4px}
+  .step.done i{background:var(--done)}
+  .step.cur i{background:var(--wait)}
+  .step.cur{color:var(--wait); font-weight:700}
+  .step.run-cur i{background:var(--run)}
+  .step.run-cur{color:var(--run); font-weight:700}
+
+  .stagecard{background:var(--phone-surface); border:1px solid var(--phone-line); border-radius:14px; padding:12px}
+  .stagecard .h{display:flex; align-items:center; gap:8px; font-weight:700; font-size:13px}
+  .stagecard .d{color:var(--phone-sub); font-size:11px; margin-top:4px}
+  .btn{display:block; width:100%; border-radius:10px; padding:10px; text-align:center; font-weight:700; font-size:13px; margin-top:10px; border:0}
+  .btn.primary{background:var(--wait); color:#1A1206}
+  .btn.ghost{background:var(--phone-surface2); color:var(--phone-ink); font-weight:600}
+  .btn.danger{background:rgba(224,96,85,.15); color:var(--err); font-weight:600}
+  .btn.disabled{background:var(--phone-surface2); color:var(--pend)}
+  .btnrow{display:flex; gap:8px}
+  .btnrow .btn{margin-top:10px}
+
+  .chat{flex:1; display:flex; flex-direction:column; gap:8px; overflow:hidden; padding:2px}
+  .bub{max-width:86%; padding:8px 11px; border-radius:12px; font-size:12px; line-height:1.5}
+  .bub.ai{background:var(--phone-surface); border:1px solid var(--phone-line); align-self:flex-start; border-bottom-left-radius:4px}
+  .bub.me{background:var(--accent); color:#fff; align-self:flex-end; border-bottom-right-radius:4px}
+  .log{font-family:ui-monospace,Menlo,monospace; font-size:10.5px; color:var(--phone-sub); background:var(--phone-surface);
+    border:1px solid var(--phone-line); border-radius:10px; padding:9px 10px; line-height:1.7}
+  .log .ok{color:var(--done)}
+  .input{background:var(--phone-surface); border:1px solid var(--phone-line); border-radius:999px; padding:9px 14px; color:var(--phone-sub); font-size:12px; flex:none}
+
+  .notes{margin-top:16px; display:flex; flex-direction:column; gap:8px}
+  .note{background:var(--card); border:1px solid var(--page-line); border-left:3px solid var(--accent); border-radius:8px; padding:9px 12px; font-size:12.5px}
+  .note b{color:var(--accent)}
+
+  .legend{margin:52px auto 0; max-width:760px; background:var(--card); border:1px solid var(--page-line); border-radius:14px; padding:20px 24px}
+  .legend h3{font-size:14px; margin-bottom:12px}
+  .legend table{width:100%; border-collapse:collapse; font-size:13px}
+  .legend td{padding:7px 8px; border-top:1px solid var(--page-line); vertical-align:top}
+  .legend td:first-child{white-space:nowrap; width:130px}
+  @media (prefers-reduced-motion:no-preference){
+    .dot-live{animation:pulse 2s infinite}
+    @keyframes pulse{50%{opacity:.4}}
+  }
+</style>
+
+<div class="wrap">
+  <div class="eyebrow">App Factory · Phone UI Mockup</div>
+  <h1>여러 프로젝트, 폰 하나로 — 동시 작업 UI/UX</h1>
+  <p class="lede">확정 스펙 기준: <b>서로 다른 프로젝트는 동시에 실행</b>됩니다. A가 개발을 도는 동안 B의 목업을 컨펌하고 C를 새로 시작할 수 있어요. 직렬화되는 것은 <b>같은 프로젝트 안의 Claude 실행</b>뿐 — 그건 큐에 쌓입니다.</p>
+  <div class="policy">
+    <span>프로젝트 간 <b>병렬 실행</b></span>
+    <span>프로젝트 내 <b>동시 1개 + 큐</b></span>
+    <span>컨펌·열람·미리보기는 <b>항상 즉시</b></span>
+  </div>
+
+  <div class="stage">
+
+    <!-- ① 홈 -->
+    <div class="unit">
+      <h2>① 홈 = 프로젝트 목록</h2>
+      <p class="cap">4개 프로젝트가 서로 다른 단계에 동시에 있음. "컨펌 대기"가 가장 밝게 — 지금 내 손이 필요한 곳.</p>
+      <div class="phone"><div class="notch"></div><div class="screen">
+        <div class="appbar"><span class="t">내 프로젝트</span><span class="spacer"></span><span class="dot-live"></span><span class="conn">PC 연결됨</span></div>
+
+        <div class="pcard attn">
+          <div class="row"><span class="name">습관 트래커</span><span class="spacer" style="flex:1"></span><span class="chip wait">컨펌 대기</span></div>
+          <div class="minibar"><i style="width:43%"></i></div>
+          <div class="meta"><span>3/7 · UI/UX 목업</span><span>방금 전</span></div>
+        </div>
+
+        <div class="pcard">
+          <div class="row"><span class="name">수면 기록</span><span class="spacer" style="flex:1"></span><span class="chip run">개발 중</span></div>
+          <div class="minibar"><i style="width:71%"></i></div>
+          <div class="meta"><span>5/7 · 개발 · 22분 경과</span><span class="chip q">명령 1개 대기</span></div>
+        </div>
+
+        <div class="pcard">
+          <div class="row"><span class="name">단어 암기 카드</span><span class="spacer" style="flex:1"></span><span class="chip run">리서치 중</span></div>
+          <div class="minibar"><i style="width:8%"></i></div>
+          <div class="meta"><span>1/7 · 아이디에이션</span><span>2분 경과</span></div>
+        </div>
+
+        <div class="pcard" style="opacity:.65">
+          <div class="row"><span class="name">쿠키의 일기장</span><span class="spacer" style="flex:1"></span><span class="chip done">출시 준비 완료</span></div>
+          <div class="minibar"><i style="width:100%; background:var(--done)"></i></div>
+          <div class="meta"><span>7/7 · 릴리즈 패키지</span><span>어제</span></div>
+        </div>
+
+        <div class="newbtn">＋ 새 프로젝트</div>
+      </div></div>
+      <div class="notes">
+        <div class="note"><b>동시 작업 증거</b> — "수면 기록"이 개발을 도는 동안 "단어 암기 카드"의 리서치도 동시에 실행 중. 둘 다 파란 배지.</div>
+        <div class="note"><b>명령 1개 대기</b> — 같은 프로젝트에 보낸 두 번째 명령은 거부되지 않고 큐에 쌓임.</div>
+      </div>
+    </div>
+
+    <!-- ② 컨펌 대기 화면 -->
+    <div class="unit">
+      <h2>② 컨펌 대기 프로젝트</h2>
+      <p class="cap">"습관 트래커" 카드를 탭하면 진입. 목업을 iframe으로 직접 보고, 채팅으로 고치고, 버튼으로 다음 단계 게이트를 연다.</p>
+      <div class="phone"><div class="notch"></div><div class="screen">
+        <div class="appbar"><span class="back">‹</span><span class="t">습관 트래커</span><span class="spacer"></span><span class="chip wait">컨펌 대기</span></div>
+
+        <div class="stepper">
+          <div class="step done"><i></i>아이디어</div>
+          <div class="step done"><i></i>PRD</div>
+          <div class="step cur"><i></i>목업</div>
+          <div class="step"><i></i>산정</div>
+          <div class="step"><i></i>개발</div>
+          <div class="step"><i></i>테스트</div>
+          <div class="step"><i></i>릴리즈</div>
+        </div>
+
+        <div class="stagecard">
+          <div class="h">UI/UX 목업 v2 <span class="chip wait" style="margin-left:auto">확인 필요</span></div>
+          <div class="d">화면 4개 · 홈 / 기록 / 통계 / 설정 — 어제 주신 "통계를 잔디밭 스타일로" 반영했어요.</div>
+          <div class="btnrow">
+            <button class="btn ghost">목업 열기 ▸ 화면: 통계 ▾</button>
+          </div>
+          <button class="btn primary">✓ 컨펌하고 산정 단계로</button>
+        </div>
+
+        <div class="chat">
+          <div class="bub me">홈에 오늘 달성률 링 추가해줘</div>
+          <div class="bub ai">반영했어요 — 목업 v1 → v2. 다른 수정도 얼마든지요.</div>
+          <div class="bub me">통계 잔디밭 초록이 너무 쨍해. 차분하게</div>
+          <div class="bub ai">채도 낮춰 4단계 그라데이션으로 바꿨어요(v3). 확인해 주세요.</div>
+        </div>
+        <div class="input">피드백 보내기… (컨펌 전 몇 번이든 수정 반복)</div>
+      </div></div>
+      <div class="notes">
+        <div class="note"><b>수정 루프</b> — 컨펌 누르기 전까지 피드백→수정(v1→v2→v3…)이 몇 번이든. 컨펌해야만 다음 단계 게이트가 열림.</div>
+        <div class="note"><b>되돌리기</b> — 스텝퍼의 지난 단계(예: PRD)를 탭하면 "이 단계부터 다시 할까요?" 확인 후 롤백. 기존 산출물은 history/에 보관.</div>
+      </div>
+    </div>
+
+    <!-- ③ 실행 중 화면 -->
+    <div class="unit">
+      <h2>③ 실행 중 프로젝트</h2>
+      <p class="cap">"수면 기록"은 개발이 도는 중 — 로그가 흐르고, 컨펌 버튼은 비활성, 내가 보낸 추가 명령은 큐에 표시된다.</p>
+      <div class="phone"><div class="notch"></div><div class="screen">
+        <div class="appbar"><span class="back">‹</span><span class="t">수면 기록</span><span class="spacer"></span><span class="chip run">개발 중 22분</span></div>
+
+        <div class="stepper">
+          <div class="step done"><i></i>아이디어</div>
+          <div class="step done"><i></i>PRD</div>
+          <div class="step done"><i></i>목업</div>
+          <div class="step done"><i></i>산정</div>
+          <div class="step run-cur"><i></i>개발</div>
+          <div class="step"><i></i>테스트</div>
+          <div class="step"><i></i>릴리즈</div>
+        </div>
+
+        <div class="stagecard">
+          <div class="h">Flutter 개발 진행 중</div>
+          <div class="d">화면 5개 중 3개 구현됨 · 이번 단계 $1.84 사용</div>
+          <div class="log">
+            <span class="ok">✓</span> sleep-chart 화면 구현<br>
+            <span class="ok">✓</span> 로컬 저장(SharedPreferences) 연결<br>
+            🔧 flutter analyze 실행 중…
+          </div>
+          <button class="btn disabled">컨펌 (단계가 끝나면 활성화)</button>
+          <div class="btnrow">
+            <button class="btn ghost">대기 중 명령 1개 ▾</button>
+            <button class="btn danger">■ 중단</button>
+          </div>
+        </div>
+
+        <div class="chat">
+          <div class="bub me">알람 소리도 3종류로 해줘</div>
+          <div class="bub ai" style="opacity:.6">↳ 현재 작업이 끝나면 이어서 실행됩니다 (대기 1번)</div>
+        </div>
+        <div class="input">메시지…</div>
+      </div></div>
+      <div class="notes">
+        <div class="note"><b>큐 동작</b> — 실행 중 보낸 "알람 소리 3종" 명령은 즉시 거부되지 않고 대기 1번으로 쌓임.</div>
+        <div class="note"><b>중단</b> — stage_cancel. 프로세스 그룹째 종료하고 재시도는 클린 상태에서.</div>
+      </div>
+    </div>
+
+    <!-- ⑤ 테스트 미리보기 -->
+    <div class="unit">
+      <h2>⑤ 테스트 — 기기 크기 미리보기</h2>
+      <p class="cap">개발된 앱을 URL로 열면 브라우저 크기대로 퍼지지 않고, 아이폰/안드로이드 논리 해상도 프레임에 맞춰 렌더. PC 브라우저에서 열어도 동일.</p>
+      <div class="phone"><div class="notch"></div><div class="screen">
+        <div class="appbar"><span class="back">‹</span><span class="t">수면 기록 · 테스트</span><span class="spacer"></span><span class="chip wait">확인 중</span></div>
+
+        <div style="display:flex; gap:6px">
+          <span class="chip run" style="font-size:10px; padding:5px 10px">iPhone 390×844</span>
+          <span class="chip q" style="font-size:10px; padding:5px 10px">Android 360×800</span>
+          <span class="chip q" style="font-size:10px; padding:5px 10px">꽉 채움</span>
+        </div>
+
+        <div style="flex:1; display:flex; align-items:center; justify-content:center; background:var(--phone-surface); border:1px solid var(--phone-line); border-radius:12px; padding:10px">
+          <div style="width:172px; height:372px; background:#0E1220; border-radius:18px; border:2px solid #333B4A; padding:10px 8px; display:flex; flex-direction:column; gap:7px; font-size:9px; color:#C7CEDB">
+            <div style="text-align:center; color:#8B94A0">9:41</div>
+            <div style="font-weight:800; font-size:12px; color:#EDF1F7">오늘의 수면</div>
+            <div style="height:74px; background:linear-gradient(160deg,#22305A,#1A2440); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:800; color:#9DB7FF">7h 32m</div>
+            <div style="display:flex; gap:5px">
+              <div style="flex:1; height:36px; background:#1A2233; border-radius:8px; display:flex; align-items:center; justify-content:center">깊은 잠</div>
+              <div style="flex:1; height:36px; background:#1A2233; border-radius:8px; display:flex; align-items:center; justify-content:center">뒤척임</div>
+            </div>
+            <div style="height:30px; background:#1A2233; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#7E8AA6">주간 그래프 ▁▃▅▆▅▇▆</div>
+            <div style="margin-top:auto; height:26px; background:#26324E; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#9DB7FF; font-weight:700">＋ 기록 시작</div>
+          </div>
+        </div>
+
+        <div class="log" style="flex:none">⚠ 이 미리보기에서 검증 불가: 광고 · 푸시 (자리표시로 표시됨)</div>
+        <button class="btn primary" style="margin-top:0">✓ 컨펌하고 릴리즈 단계로</button>
+      </div></div>
+      <div class="notes">
+        <div class="note"><b>프레임 전환</b> — 칩 탭으로 iPhone↔Android 논리 해상도 즉시 전환(재빌드 없음, iframe 크기만 변경). 목업 단계도 같은 프레임.</div>
+        <div class="note"><b>실물 크기 감각</b> — transform scale로 화면에 맞춰 축소하되 비율은 실기기와 동일 — 오버플로·터치 타겟 문제를 여기서 잡음.</div>
+      </div>
+    </div>
+
+    <!-- ④ 폐기/보관 -->
+    <div class="unit">
+      <h2>④ 폐기 · 보관</h2>
+      <p class="cap">하다가 접는 것도 정식 플로우. 프로젝트 카드를 길게 누르면 관리 시트가 뜨고, 삭제는 이름 입력 + 자동 백업으로 안전하게.</p>
+      <div class="phone"><div class="notch"></div><div class="screen">
+        <div class="appbar"><span class="t">내 프로젝트</span><span class="spacer"></span><span class="dot-live"></span><span class="conn">PC 연결됨</span></div>
+
+        <div class="pcard" style="opacity:.4">
+          <div class="row"><span class="name">단어 암기 카드</span><span class="spacer" style="flex:1"></span><span class="chip pend">1/7</span></div>
+        </div>
+
+        <div class="stagecard" style="border-color:var(--phone-line)">
+          <div class="h">단어 암기 카드 관리</div>
+          <div class="d">아이디에이션 단계 · 마지막 활동 2시간 전</div>
+          <button class="btn ghost">📦 보관하기 — 목록에서 접기, 언제든 복원</button>
+          <button class="btn ghost">✏️ 이름 바꾸기</button>
+          <button class="btn danger">🗑 삭제하기</button>
+        </div>
+
+        <div class="stagecard" style="border-color:var(--err)">
+          <div class="h" style="color:var(--err)">정말 삭제할까요?</div>
+          <div class="d">산출물·채팅 기록이 모두 지워집니다. 삭제 전 백업 zip이 archive/에 자동 저장돼요. 확인하려면 프로젝트 이름을 입력하세요.</div>
+          <div class="input" style="margin-top:10px; border-radius:10px">단어-암기-카드</div>
+          <div class="btnrow">
+            <button class="btn ghost">취소</button>
+            <button class="btn danger">삭제</button>
+          </div>
+        </div>
+      </div></div>
+      <div class="notes">
+        <div class="note"><b>보관 vs 삭제</b> — 애매하면 보관(접기)이 기본. 삭제는 이름 입력 이중 확인 + zip 자동 백업.</div>
+        <div class="note"><b>실행 중이면?</b> — 작업이 도는 중엔 삭제·보관이 거부되고 "먼저 중단하세요" 안내.</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="legend">
+    <h3>상태 배지 규칙 (pipeline.json → 폰)</h3>
+    <table>
+      <tr><td><span class="chip wait" style="font-size:11px">컨펌 대기</span></td><td>내 확인이 필요한 상태. 홈에서 가장 눈에 띄게 — 파이프라인 회전 속도는 이걸 얼마나 빨리 여느냐가 결정.</td></tr>
+      <tr><td><span class="chip run" style="font-size:11px">실행 중</span></td><td>PC에서 Claude가 작업 중. 여러 프로젝트가 동시에 이 상태일 수 있음. 컨펌 버튼은 비활성.</td></tr>
+      <tr><td><span class="chip q" style="font-size:11px">명령 N개 대기</span></td><td>같은 프로젝트 안의 추가 명령은 큐로. 단계가 바뀌면 잔여 큐는 취소 통지와 함께 비워짐.</td></tr>
+      <tr><td><span class="chip done" style="font-size:11px">완료</span></td><td>릴리즈 패키지까지 완성. 스토어 콘솔에 복붙만 남음. "업데이트 시작"으로 v2 사이클 재진입.</td></tr>
+      <tr><td><span class="chip pend" style="font-size:11px">대기</span></td><td>생성됐지만 아직 시작 안 함(pending) / 에러 시엔 빨간 배지 + 재시도 버튼.</td></tr>
+    </table>
+  </div>
+</div>
